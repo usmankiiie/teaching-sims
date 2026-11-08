@@ -1,0 +1,899 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Shawarma Market Shifts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap">
+<style>
+/* Shared look for the course simulations. build_sims.py puts this into every page.
+
+   Colors are tokens. The full light palette sits on :root, and the two dark blocks repeat only
+   the tokens, so a color never exists in one theme alone. The curve colors follow the course
+   figures, demand blue and supply orange, and were checked with the dataviz validator on
+   2026-09-25. Light #1e5a96 and #b45028 on white, dark #3d8ae0 and #dd7433 on #152131, all
+   checks pass, CVD separation included. The course figures' green for a new equilibrium was
+   dropped, since it could not be told from the supply orange under red-green color blindness.
+   The old point is gray and the new point is ink, so they differ by lightness and by label. */
+
+:root {
+  --ground: #f3f6fa;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+  --ink: #13233a;
+  --ink-2: #3f5068;
+  --muted: #66758a;
+  --rule: #d6dee8;
+  --grid: #e8edf3;
+  --accent: #1a3260;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3eaf5;
+  --focus: #2f6fdb;
+  --demand: #1e5a96;
+  --supply: #b45028;
+  --old: #8b98a9;
+  --good: #1f6b33;
+  --good-bg: #e6f2e8;
+  --bad: #a3261f;
+  --bad-bg: #fbe9e7;
+  /* Lexend, a face designed for reading ease. Atkinson Hyperlegible was tried first, but it
+     slashes its zeros, so 200 read as 2 then two crossed circles on every axis. */
+  --font: "Lexend", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --mono: "Lexend", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0d1520;
+    --surface: #152131;
+    --surface-2: #1b2a3d;
+    --ink: #e8eef6;
+    --ink-2: #b9c6d6;
+    --muted: #8d9cb0;
+    --rule: #2a3b51;
+    --grid: #1f2e41;
+    --accent: #9dbbe6;
+    --accent-ink: #0d1520;
+    --accent-soft: #1f3150;
+    --focus: #8ab4f8;
+    --demand: #3d8ae0;
+    --supply: #dd7433;
+    --old: #6f7f94;
+    --good: #7fcf8f;
+    --good-bg: #173322;
+    --bad: #f19a90;
+    --bad-bg: #3a1c1a;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0d1520;
+  --surface: #152131;
+  --surface-2: #1b2a3d;
+  --ink: #e8eef6;
+  --ink-2: #b9c6d6;
+  --muted: #8d9cb0;
+  --rule: #2a3b51;
+  --grid: #1f2e41;
+  --accent: #9dbbe6;
+  --accent-ink: #0d1520;
+  --accent-soft: #1f3150;
+  --focus: #8ab4f8;
+  --demand: #3d8ae0;
+  --supply: #dd7433;
+  --old: #6f7f94;
+  --good: #7fcf8f;
+  --good-bg: #173322;
+  --bad: #f19a90;
+  --bad-bg: #3a1c1a;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.5;
+}
+[hidden] { display: none !important; }
+
+.sim { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; }
+.sim-head { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+}
+.sim-head h1 {
+  margin: 0; font-size: clamp(26px, 4.2vw, 36px); line-height: 1.15; text-wrap: balance;
+  color: var(--ink);
+}
+.lede { margin: 0; max-width: 65ch; color: var(--ink-2); }
+.sim-foot { margin-top: 28px; font-size: 14px; color: var(--muted); max-width: 70ch; }
+
+/* tabs */
+.tabs {
+  display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-block: 6px 16px;
+  background: var(--surface-2); border-radius: 10px;
+}
+.tab {
+  font: inherit; font-weight: 700; border: 0; border-radius: 7px; cursor: pointer;
+  background: transparent; color: var(--ink-2); padding: 8px 16px; min-height: 42px;
+}
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+
+/* layout */
+.layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .layout.wide-first { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .layout.two-one { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  /* The graph stays in view while the questions beside it scroll, so the move is seen. */
+  .layout > .card.figure {
+    position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
+    max-height: calc(100vh - 24px); overflow-y: auto;
+  }
+}
+.result { margin: 10px 0 0; font-weight: 600; }
+.figure .choice { margin: 4px 0 10px; }
+.table-wrap { overflow-x: auto; margin-top: 10px; }
+.compare { width: 100%; border-collapse: collapse; font-size: 15px; }
+.compare th, .compare td { padding: 6px 10px; border-bottom: 1px solid var(--rule); text-align: left; }
+.compare thead th { color: var(--muted); font-weight: 600; font-size: 13px; }
+.compare td { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.stack { display: grid; gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 16px; }
+.card h2 { margin: 0 0 8px; font-size: 18px; color: var(--ink); }
+.figure svg { display: block; width: 100%; height: auto; }
+.fig-title { margin: 0 0 4px; font-size: 16px; font-weight: 700; color: var(--ink); }
+.fig-note { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+.pair { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 620px) { .pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.trio { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 720px) { .trio { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* text blocks */
+.event-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 14px; }
+.event-text { margin: 6px 0 14px; font-size: 19px; line-height: 1.45; }
+.say { margin: 10px 0 0; }
+.note { font-size: 14px; color: var(--muted); margin: 8px 0 0; }
+
+/* questions */
+.q { display: grid; gap: 10px; margin-top: 14px; }
+.q-prompt { margin: 0; font-weight: 700; }
+.options { display: grid; gap: 8px; }
+.opt {
+  font: inherit; text-align: left; display: flex; gap: 10px; align-items: flex-start;
+  background: var(--surface); color: var(--ink); cursor: pointer;
+  border: 1.5px solid var(--rule); border-radius: 10px; padding: 10px 14px; min-height: 48px;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:disabled { cursor: default; }
+.opt .letter { font-weight: 700; color: var(--muted); min-width: 1.4em; }
+.opt[data-state="right"] { border-color: var(--good); background: var(--good-bg); }
+.opt[data-state="wrong"] { border-color: var(--bad); background: var(--bad-bg); }
+.opt[data-state="right"] .letter { color: var(--good); }
+.opt[data-state="wrong"] .letter { color: var(--bad); }
+.feedback { border-radius: 10px; padding: 10px 14px; background: var(--surface-2); }
+.verdict { font-weight: 700; }
+.feedback.is-right .verdict { color: var(--good); }
+.feedback.is-wrong .verdict { color: var(--bad); }
+
+/* buttons and controls */
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+.btn {
+  font: inherit; font-weight: 700; cursor: pointer; min-height: 44px; padding: 9px 18px;
+  border-radius: 10px; border: 1.5px solid var(--accent); background: var(--accent); color: var(--accent-ink);
+}
+.btn.secondary { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.choice { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice .btn[aria-pressed="false"] { background: transparent; color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.slider { display: grid; gap: 2px; margin-top: 12px; }
+.slider label { font-weight: 700; }
+.slider .ends { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.slider output { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 15px; }
+input[type="range"] { width: 100%; min-height: 34px; accent-color: var(--accent); }
+
+/* readouts */
+.readouts { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-top: 14px; }
+.readout { background: var(--surface-2); border-radius: 10px; padding: 8px 12px; }
+.readout .r-label { display: block; font-size: 13px; color: var(--muted); }
+.readout .r-value { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 19px; color: var(--ink); }
+.readout .r-was { font-size: 13px; color: var(--muted); font-family: var(--mono); }
+
+/* the plots */
+.plot text { font-family: var(--font); fill: var(--ink-2); }
+.plot .tick { font-size: 15px; fill: var(--muted); }
+.plot .axis-line { stroke: var(--ink-2); stroke-width: 1.5; }
+.plot .gridline { stroke: var(--grid); stroke-width: 1; }
+.plot .axis-label { font-size: 15px; fill: var(--ink-2); }
+.plot .curve { fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.plot .curve.dashed { stroke-dasharray: 11 7; }
+.plot .c-demand { stroke: var(--demand); }
+.plot .c-supply { stroke: var(--supply); }
+.plot .c-ink { stroke: var(--ink); }
+.plot .c-old { stroke: var(--old); }
+.plot .lbl { font-size: 19px; font-weight: 700; }
+.plot .l-demand { fill: var(--demand); }
+.plot .l-supply { fill: var(--supply); }
+.plot .l-ink { fill: var(--ink); }
+.plot .l-old { fill: var(--muted); }
+.plot .pt-old { fill: var(--old); stroke: var(--surface); stroke-width: 2.5; }
+.plot .pt-new { fill: var(--ink); stroke: var(--surface); stroke-width: 2.5; }
+.plot .guide { stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 3 4; fill: none; }
+.plot .arrow { stroke: var(--muted); stroke-width: 2.4; fill: none; }
+.plot .arrowhead { fill: var(--muted); }
+.plot .axmark { font-size: 15px; font-weight: 700; fill: var(--ink); }
+.plot .axmark.old { fill: var(--muted); }
+/* A halo in the card's color behind every label, so a line that passes close stays behind it */
+.plot .lbl, .plot .axmark {
+  paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round;
+}
+.plot .band { fill: var(--accent-soft); }
+/* Two graphs side by side print at about 0.6 of their size, so their text is set larger. */
+.pair .plot .tick, .pair .plot .axis-label, .pair .plot .axmark { font-size: 20px; }
+.pair .plot .lbl { font-size: 24px; }
+.trio .plot .tick, .trio .plot .axis-label { font-size: 22px; }
+.trio .plot .lbl { font-size: 24px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+</style>
+<div class="sim">
+<header class="sim-head">
+<div class="eyebrow">ECON 105, Chapter 3</div>
+<h1>Shawarma Market Shifts</h1>
+<p class="lede">Something happens in the market for shawarma near the university. Say which curve moves and what happens to the price and the quantity. Then watch it on the graph.</p>
+</header>
+<main id="app"></main>
+<footer class="sim-foot">The market is Table 1 from the class exercise. Nothing you do on this page is saved or sent anywhere.</footer>
+</div>
+<script>const SIM = {"market":{"a":900,"b":50,"c":-100,"d":50,"p0":10,"q0":400,"shift":200,"big":300,"small":100,"xmax":1200,"ymax":20,"xticks":[0,200,400,600,800,1000,1200],"yticks":[0,4,8,12,16,20],"explore_step":50,"explore_max":300},"events":[{"id":"tastes","event":"A popular food show says the shawarma near the university is the best in Al Ain.","d":1,"s":0,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"D+1","why":"This is a change in tastes. Buyers now want more shawarma at every price, so demand increases and the curve moves right."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p+1q+1","why":"At the old price of 10 dirhams buyers now want more than the shops offer. That shortage pushes the price up, and more shawarmas are sold."},"h_d":200,"h_s":0,"p":12,"q":500,"result":"The price rises from 10 to 12 dirhams, and the quantity rises from 400 to 500 shawarmas a day."},{"id":"income_normal","event":"Student allowances rise. Shawarma is a normal good for these students.","d":1,"s":0,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"D+1","why":"People buy more of a normal good when their income rises. Demand increases and the curve moves right."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p+1q+1","why":"At the old price of 10 dirhams buyers now want more than the shops offer. That shortage pushes the price up, and more shawarmas are sold."},"h_d":200,"h_s":0,"p":12,"q":500,"result":"The price rises from 10 to 12 dirhams, and the quantity rises from 400 to 500 shawarmas a day."},{"id":"income_inferior","event":"Student allowances rise. This time, shawarma is an inferior good for these students.","d":-1,"s":0,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"D-1","why":"People buy less of an inferior good when their income rises. With more money the students eat other meals, so demand decreases and the curve moves left."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p-1q-1","why":"At the old price of 10 dirhams the shops now offer more than buyers want. That surplus pushes the price down, and fewer shawarmas are sold."},"h_d":-200,"h_s":0,"p":8,"q":300,"result":"The price falls from 10 to 8 dirhams, and the quantity falls from 400 to 300 shawarmas a day."},{"id":"substitute","event":"Falafel is a substitute for shawarma. The falafel shop next door cuts its prices.","d":-1,"s":0,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"D-1","why":"When a substitute becomes cheaper, some buyers switch to it. They want less shawarma at every price, so demand decreases and the curve moves left."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p-1q-1","why":"At the old price of 10 dirhams the shops now offer more than buyers want. That surplus pushes the price down, and fewer shawarmas are sold."},"h_d":-200,"h_s":0,"p":8,"q":300,"result":"The price falls from 10 to 8 dirhams, and the quantity falls from 400 to 300 shawarmas a day."},{"id":"complement","event":"Fresh juice is a complement to shawarma. The price of fresh juice rises.","d":-1,"s":0,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"D-1","why":"Complements are bought together. When juice costs more, the meal costs more, so buyers want less shawarma at every price. Demand decreases."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p-1q-1","why":"At the old price of 10 dirhams the shops now offer more than buyers want. That surplus pushes the price down, and fewer shawarmas are sold."},"h_d":-200,"h_s":0,"p":8,"q":300,"result":"The price falls from 10 to 8 dirhams, and the quantity falls from 400 to 300 shawarmas a day."},{"id":"buyers","event":"The university closes for the summer, and most students go home.","d":-1,"s":0,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"D-1","why":"There are fewer buyers near the university, so less shawarma is wanted at every price. Demand decreases and the curve moves left."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p-1q-1","why":"At the old price of 10 dirhams the shops now offer more than buyers want. That surplus pushes the price down, and fewer shawarmas are sold."},"h_d":-200,"h_s":0,"p":8,"q":300,"result":"The price falls from 10 to 8 dirhams, and the quantity falls from 400 to 300 shawarmas a day."},{"id":"expectations","event":"Buyers hear that the price of shawarma will rise next week.","d":1,"s":0,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"D+1","why":"Buyers want to buy now, before the price goes up, so demand today increases. This is a change in expectations."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p+1q+1","why":"At the old price of 10 dirhams buyers now want more than the shops offer. That shortage pushes the price up, and more shawarmas are sold."},"h_d":200,"h_s":0,"p":12,"q":500,"result":"The price rises from 10 to 12 dirhams, and the quantity rises from 400 to 500 shawarmas a day."},{"id":"input_up","event":"The price of chicken rises. Chicken is the main input in a shawarma.","d":0,"s":-1,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"S-1","why":"A more expensive input raises the cost of each shawarma, so the shops offer fewer at every price. Supply decreases and the curve moves left."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p+1q-1","why":"At the old price of 10 dirhams buyers now want more than the shops offer. That shortage pushes the price up, and buyers buy fewer at the higher price."},"h_d":0,"h_s":-200,"p":12,"q":300,"result":"The price rises from 10 to 12 dirhams, and the quantity falls from 400 to 300 shawarmas a day."},{"id":"wages","event":"Many shawarma cooks leave for jobs in Dubai, so the shops must pay higher wages to keep their cooks.","d":0,"s":-1,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"S-1","why":"Wages are a cost of making shawarma. Higher costs mean fewer shawarmas offered at every price, so supply decreases."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p+1q-1","why":"At the old price of 10 dirhams buyers now want more than the shops offer. That shortage pushes the price up, and buyers buy fewer at the higher price."},"h_d":0,"h_s":-200,"p":12,"q":300,"result":"The price rises from 10 to 12 dirhams, and the quantity falls from 400 to 300 shawarmas a day."},{"id":"sellers","event":"Three new shawarma shops open near the university.","d":0,"s":1,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"S+1","why":"More sellers means more shawarma is offered at every price. Supply increases and the curve moves right."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p-1q+1","why":"At the old price of 10 dirhams the shops now offer more than buyers want. That surplus pushes the price down, and buyers buy more at the lower price."},"h_d":0,"h_s":200,"p":8,"q":500,"result":"The price falls from 10 to 8 dirhams, and the quantity rises from 400 to 500 shawarmas a day."},{"id":"input_down","event":"The price of the bread used for the wraps falls. Bread is an input.","d":0,"s":1,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"S+1","why":"A cheaper input lowers the cost of each shawarma, so the shops offer more at every price. Supply increases."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p-1q+1","why":"At the old price of 10 dirhams the shops now offer more than buyers want. That surplus pushes the price down, and buyers buy more at the lower price."},"h_d":0,"h_s":200,"p":8,"q":500,"result":"The price falls from 10 to 8 dirhams, and the quantity rises from 400 to 500 shawarmas a day."},{"id":"technology","event":"A new kind of grill cooks each shawarma using half as much gas.","d":0,"s":1,"kind":"single","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"S+1","why":"This is a change in technology. Each shawarma now costs less to make, so the shops offer more at every price. Supply increases."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p0q0","text":"Neither price nor quantity changes"}],"answer":"p-1q+1","why":"At the old price of 10 dirhams the shops now offer more than buyers want. That surplus pushes the price down, and buyers buy more at the lower price."},"h_d":0,"h_s":200,"p":8,"q":500,"result":"The price falls from 10 to 8 dirhams, and the quantity rises from 400 to 500 shawarmas a day."},{"id":"own_price","event":"The shops cut the price of a shawarma from 12 dirhams to 10 dirhams.","d":0,"s":0,"kind":"own","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"D+1","text":"The demand curve shifts to the right, because demand increases"},{"key":"D-1","text":"The demand curve shifts to the left, because demand decreases"},{"key":"S+1","text":"The supply curve shifts to the right, because supply increases"},{"key":"S-1","text":"The supply curve shifts to the left, because supply decreases"},{"key":"none","text":"Neither curve shifts"}],"answer":"none","why":"The price of shawarma itself changed, so neither curve moves. Only something other than the good's own price can shift a curve."},"q2":{"prompt":"What happens in the market for shawarma?","options":[{"key":"D+1","text":"The demand for shawarma increases"},{"key":"D-1","text":"The demand for shawarma decreases"},{"key":"QD+1","text":"The quantity demanded of shawarma increases"},{"key":"QD-1","text":"The quantity demanded of shawarma decreases"}],"answer":"QD+1","why":"The price fell, so buyers move down along the demand curve they were already on. The quantity demanded increases. Demand, the whole curve, does not change."},"own":{"p_from":12,"p_to":10,"q_from":300,"q_to":400},"result":"Buyers move down along the demand curve, from 300 to 400 shawarmas a day. The demand curve itself does not move."},{"id":"double_up_left","event":"Student allowances rise, and shawarma is a normal good for them. At the same time, the price of chicken rises.","d":1,"s":-1,"kind":"double","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"d+1s-1","text":"Demand shifts right and supply shifts left"},{"key":"d-1s+1","text":"Demand shifts left and supply shifts right"},{"key":"d+1s+1","text":"Demand shifts right and supply shifts right"},{"key":"d-1s-1","text":"Demand shifts left and supply shifts left"}],"answer":"d+1s-1","why":"Higher incomes raise demand, so demand moves right. The more expensive chicken lowers supply, so supply moves left."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p+1q?","text":"Price rises, and the change in quantity cannot be told"},{"key":"p-1q?","text":"Price falls, and the change in quantity cannot be told"},{"key":"p?q+1","text":"Quantity rises, and the change in price cannot be told"},{"key":"p?q-1","text":"Quantity falls, and the change in price cannot be told"}],"answer":"p+1q?","why":"Both shifts push the price the same way, so that change is certain. They push the quantity in opposite directions, and the event does not say which shift is larger, so that change cannot be told."},"cases":[{"h_d":300,"h_s":-100,"p":14,"q":500},{"h_d":100,"h_s":-300,"p":14,"q":300}],"result":"If the demand shift is larger, the price is 14 dirhams and the quantity is 500. If the supply shift is larger, the price is 14 dirhams and the quantity is 300. The price rises in both, so that change is certain. The quantity rises in one and falls in the other, so the change in quantity cannot be told."},{"id":"double_up_up","event":"A food show praises the shawarma near the university. At the same time, three new shawarma shops open nearby.","d":1,"s":1,"kind":"double","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"d+1s-1","text":"Demand shifts right and supply shifts left"},{"key":"d-1s+1","text":"Demand shifts left and supply shifts right"},{"key":"d+1s+1","text":"Demand shifts right and supply shifts right"},{"key":"d-1s-1","text":"Demand shifts left and supply shifts left"}],"answer":"d+1s+1","why":"The food show raises demand, so demand moves right. The new shops raise supply, so supply moves right too."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p+1q?","text":"Price rises, and the change in quantity cannot be told"},{"key":"p-1q?","text":"Price falls, and the change in quantity cannot be told"},{"key":"p?q+1","text":"Quantity rises, and the change in price cannot be told"},{"key":"p?q-1","text":"Quantity falls, and the change in price cannot be told"}],"answer":"p?q+1","why":"Both shifts push the quantity the same way, so that change is certain. They push the price in opposite directions, and the event does not say which shift is larger, so that change cannot be told."},"cases":[{"h_d":300,"h_s":100,"p":12,"q":600},{"h_d":100,"h_s":300,"p":8,"q":600}],"result":"If the demand shift is larger, the price is 12 dirhams and the quantity is 600. If the supply shift is larger, the price is 8 dirhams and the quantity is 600. The quantity rises in both, so that change is certain. The price rises in one and falls in the other, so the change in price cannot be told."},{"id":"double_down_up","event":"Falafel is a substitute for shawarma, and the falafel shop cuts its prices. At the same time, the price of the bread used for the wraps falls.","d":-1,"s":1,"kind":"double","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"d+1s-1","text":"Demand shifts right and supply shifts left"},{"key":"d-1s+1","text":"Demand shifts left and supply shifts right"},{"key":"d+1s+1","text":"Demand shifts right and supply shifts right"},{"key":"d-1s-1","text":"Demand shifts left and supply shifts left"}],"answer":"d-1s+1","why":"Cheaper falafel lowers demand for shawarma, so demand moves left. Cheaper bread lowers costs, so supply moves right."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p+1q?","text":"Price rises, and the change in quantity cannot be told"},{"key":"p-1q?","text":"Price falls, and the change in quantity cannot be told"},{"key":"p?q+1","text":"Quantity rises, and the change in price cannot be told"},{"key":"p?q-1","text":"Quantity falls, and the change in price cannot be told"}],"answer":"p-1q?","why":"Both shifts push the price the same way, so that change is certain. They push the quantity in opposite directions, and the event does not say which shift is larger, so that change cannot be told."},"cases":[{"h_d":-300,"h_s":100,"p":6,"q":300},{"h_d":-100,"h_s":300,"p":6,"q":500}],"result":"If the demand shift is larger, the price is 6 dirhams and the quantity is 300. If the supply shift is larger, the price is 6 dirhams and the quantity is 500. The price falls in both, so that change is certain. The quantity falls in one and rises in the other, so the change in quantity cannot be told."},{"id":"double_down_down","event":"The university closes for the summer. At the same time, the price of chicken rises.","d":-1,"s":-1,"kind":"double","q1":{"prompt":"Which curve moves, and which way?","options":[{"key":"d+1s-1","text":"Demand shifts right and supply shifts left"},{"key":"d-1s+1","text":"Demand shifts left and supply shifts right"},{"key":"d+1s+1","text":"Demand shifts right and supply shifts right"},{"key":"d-1s-1","text":"Demand shifts left and supply shifts left"}],"answer":"d-1s-1","why":"Fewer buyers lower demand, so demand moves left. More expensive chicken lowers supply, so supply moves left too."},"q2":{"prompt":"What happens to the price and the quantity?","options":[{"key":"p+1q+1","text":"Price rises and quantity rises"},{"key":"p+1q-1","text":"Price rises and quantity falls"},{"key":"p-1q+1","text":"Price falls and quantity rises"},{"key":"p-1q-1","text":"Price falls and quantity falls"},{"key":"p+1q?","text":"Price rises, and the change in quantity cannot be told"},{"key":"p-1q?","text":"Price falls, and the change in quantity cannot be told"},{"key":"p?q+1","text":"Quantity rises, and the change in price cannot be told"},{"key":"p?q-1","text":"Quantity falls, and the change in price cannot be told"}],"answer":"p?q-1","why":"Both shifts push the quantity the same way, so that change is certain. They push the price in opposite directions, and the event does not say which shift is larger, so that change cannot be told."},"cases":[{"h_d":-300,"h_s":-100,"p":8,"q":200},{"h_d":-100,"h_s":-300,"p":12,"q":200}],"result":"If the demand shift is larger, the price is 8 dirhams and the quantity is 200. If the supply shift is larger, the price is 12 dirhams and the quantity is 200. The quantity falls in both, so that change is certain. The price falls in one and rises in the other, so the change in price cannot be told."}],"ui":{"right":"Right.","wrong":"Not quite. The right answer is marked.","tab_events":"Events","tab_explore":"Explore","event_of":"Event {n} of {total}","score":"Right first time, {right} of {asked}","next":"Next event","back":"Back","mix":"Mix the order","replay":"Watch it again","graph_title":"The market for shawarma near the university","case_demand":"If the demand shift is larger","case_supply":"If the supply shift is larger","cases_label":"Choose which shift is larger","start_line":"At the start the price is {p} dirhams and the quantity is {q} shawarmas a day.","xlabel":"Shawarmas a day","ylabel":"Price, dirhams","legend":"Solid lines are the starting curves and dashed lines are the new ones. The gray dot is the old equilibrium and the dark dot is the new one.","legend_own":"Neither curve moves. The gray dot is where buyers were at 12 dirhams, and the dark dot is where they are at 10 dirhams.","answer_first":"Answer the two questions, and the graph will show what happens.","done":"That was the last event. Press Mix the order to go again in a new order, or try the Explore tab.","explore_intro":"Move each curve with its slider and watch the price and the quantity. The starting market is 10 dirhams and 400 shawarmas a day.","demand":"Demand","supply":"Supply","left":"moves left","right_end":"moves right","shift_none":"no change","shift_right":"right by {n}","shift_left":"left by {n}","reset":"Put both curves back","price":"Price, dirhams","quantity":"Quantity, shawarmas a day","was":"was {v}","label_d":"D","label_s":"S","label_e":"E","label_p":"P","label_q":"Q"}};</script>
+<script>
+/* Shared behavior for the course simulations. build_sims.py puts this into every page, after
+   the SIM data and before the simulation's own script.
+
+     Sim.h, Sim.svg   build an HTML or an SVG element
+     Sim.Plot         one set of axes with a data scale, and helpers to draw on it
+     Sim.question     a multiple-choice question that marks itself and shows the reason
+     Sim.tabs         a row of tabs that shows one panel at a time
+     Sim.readouts     a row of labelled numbers
+     Sim.slider       a labelled range input
+     Sim.tween        a short animation that respects reduced motion
+     Sim.expect       compares a number the page computed with the one Python proved
+     Sim.fmt, Sim.fill  number formatting and {name} templates
+
+   Every word a student reads comes from SIM, which the builder has checked against the
+   writing rules. Nothing here writes a sentence of its own. */
+"use strict";
+
+const Sim = (() => {
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const LETTERS = "ABCDEFGH";
+
+  function setAttrs(e, attrs) {
+    if (!attrs) return e;
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v === undefined || v === null || v === false) continue;
+      e.setAttribute(k, v === true ? "" : String(v));
+    }
+    return e;
+  }
+
+  function svg(tag, attrs, parent) {
+    const e = setAttrs(document.createElementNS(SVGNS, tag), attrs);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  function h(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    if (attrs) {
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v === undefined || v === null || v === false) continue;
+        if (k === "class") e.className = v;
+        else if (k === "text") e.textContent = v;
+        else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2), v);
+        else e.setAttribute(k, v === true ? "" : String(v));
+      }
+    }
+    for (const kid of kids.flat(Infinity)) {
+      if (kid === null || kid === undefined || kid === false) continue;
+      const leaf = typeof kid === "string" || typeof kid === "number";
+      e.appendChild(leaf ? document.createTextNode(String(kid)) : kid);
+    }
+    return e;
+  }
+
+  function fmt(x, dp = 0) {
+    return Number(x).toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  }
+
+  function fill(template, vals) {
+    return String(template).replace(/\{(\w+)\}/g, (m, k) =>
+      Object.prototype.hasOwnProperty.call(vals, k) ? String(vals[k]) : m);
+  }
+
+  const reduced = () =>
+    !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  /* On a narrow screen the graph sits above the questions, out of sight once a student has
+     scrolled down to answer. Bring it back into view before it moves. The jump is instant,
+     since a smooth scroll was seen to start a second late and miss most of the animation. */
+  function showOnNarrow(el) {
+    const narrow = window.matchMedia && window.matchMedia("(max-width: 899px)").matches;
+    if (narrow && el && el.scrollIntoView) el.scrollIntoView({ behavior: "auto", block: "start" });
+  }
+
+  /* Runs onFrame(k) with k easing from 0 to 1. Returns a function that stops it.
+     A browser stops drawing frames in a hidden tab or a hidden frame, which once left a graph
+     frozen half way. A timer finishes the move if the frames have not, so the end state
+     always arrives. */
+  function tween(ms, onFrame, onDone) {
+    let stopped = false;
+    let finished = false;
+    const finish = () => {
+      if (finished || stopped) return;
+      finished = true;
+      onFrame(1);
+      if (onDone) onDone();
+    };
+    if (reduced() || ms <= 0) {
+      finish();
+      return () => {};
+    }
+    let start = null;
+    const step = (ts) => {
+      if (stopped || finished) return;
+      if (start === null) start = ts;
+      const k = Math.min(1, (ts - start) / ms);
+      if (k >= 1) { finish(); return; }
+      onFrame(k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    const timer = setTimeout(finish, ms + 400);
+    return () => { stopped = true; clearTimeout(timer); };
+  }
+
+  /* The page's own number against the one check_numbers() proved. A mismatch goes to the
+     console, where the browser test looks for it. */
+  function expect(label, got, want, tol = 1e-6) {
+    if (!(Math.abs(got - want) <= tol)) {
+      console.error("SIM CHECK FAILED", label, "page", got, "python", want);
+      return false;
+    }
+    return true;
+  }
+
+  let plotSeq = 0;
+
+  class Plot {
+    /* o: xmin, xmax, ymin, ymax, xticks, yticks, xfmt, yfmt, xlabel, ylabel, label,
+          width, height, m (margins l, r, t, b) */
+    constructor(host, o) {
+      this.o = Object.assign({ width: 480, height: 400, xfmt: (v) => fmt(v), yfmt: (v) => fmt(v) }, o);
+      this.o.m = Object.assign({ l: 56, r: 18, t: 34, b: 50 }, o.m || {});
+      const { width, height } = this.o;
+      this.id = "plot" + (++plotSeq);
+      this.root = svg("svg", {
+        viewBox: `0 0 ${width} ${height}`, class: "plot", role: "img", "aria-label": o.label || "",
+      }, host);
+      const defs = svg("defs", null, this.root);
+      const clip = svg("clipPath", { id: this.id + "c" }, defs);
+      svg("rect", { x: this.x0, y: this.y1, width: this.x1 - this.x0, height: this.y0 - this.y1 }, clip);
+      const mk = svg("marker", {
+        id: this.id + "a", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 6, markerHeight: 6,
+        orient: "auto-start-reverse",
+      }, defs);
+      svg("path", { d: "M0,0 L10,5 L0,10 z", class: "arrowhead" }, mk);
+      this.gGrid = svg("g", null, this.root);
+      this.gData = svg("g", { "clip-path": `url(#${this.id}c)` }, this.root);
+      this.gAxis = svg("g", null, this.root);
+      this.gTop = svg("g", null, this.root);
+      this.layers = new Map();
+      this.drawAxes();
+    }
+
+    get x0() { return this.o.m.l; }
+    get x1() { return this.o.width - this.o.m.r; }
+    get y0() { return this.o.height - this.o.m.b; }
+    get y1() { return this.o.m.t; }
+
+    x(v) { const o = this.o; return this.x0 + ((v - o.xmin) / (o.xmax - o.xmin)) * (this.x1 - this.x0); }
+    y(v) { const o = this.o; return this.y0 - ((v - o.ymin) / (o.ymax - o.ymin)) * (this.y0 - this.y1); }
+
+    drawAxes() {
+      const o = this.o;
+      for (const t of o.yticks || []) {
+        svg("line", { x1: this.x0, x2: this.x1, y1: this.y(t), y2: this.y(t), class: "gridline" }, this.gGrid);
+        svg("text", { x: this.x0 - 8, y: this.y(t) + 5, "text-anchor": "end", class: "tick" }, this.gAxis)
+          .textContent = o.yfmt(t);
+      }
+      for (const t of o.xticks || []) {
+        svg("line", { x1: this.x(t), x2: this.x(t), y1: this.y0, y2: this.y1, class: "gridline" }, this.gGrid);
+        svg("text", { x: this.x(t), y: this.y0 + 21, "text-anchor": "middle", class: "tick" }, this.gAxis)
+          .textContent = o.xfmt(t);
+      }
+      svg("line", { x1: this.x0, x2: this.x0, y1: this.y0, y2: this.y1 - 6, class: "axis-line" }, this.gAxis);
+      svg("line", { x1: this.x0, x2: this.x1 + 6, y1: this.y0, y2: this.y0, class: "axis-line" }, this.gAxis);
+      if (o.xlabel) {
+        svg("text", { x: this.x1, y: o.height - 6, "text-anchor": "end", class: "axis-label" }, this.gAxis)
+          .textContent = o.xlabel;
+      }
+      if (o.ylabel) {
+        svg("text", { x: 4, y: 18, "text-anchor": "start", class: "axis-label" }, this.gAxis)
+          .textContent = o.ylabel;
+      }
+    }
+
+    /* Named layers, cleared and redrawn as the state changes. "top" layers are not clipped. */
+    layer(name, top) {
+      if (!this.layers.has(name)) this.layers.set(name, svg("g", null, top ? this.gTop : this.gData));
+      return this.layers.get(name);
+    }
+    clear(name) { const g = this.layers.get(name); if (g) g.replaceChildren(); }
+    clearAll() { for (const g of this.layers.values()) g.replaceChildren(); }
+
+    path(g, pts, cls) {
+      const d = pts.map((p, i) => (i ? "L" : "M") + this.x(p[0]).toFixed(1) + " " + this.y(p[1]).toFixed(1)).join(" ");
+      return svg("path", { d, class: cls }, g);
+    }
+    segment(g, xa, ya, xb, yb, cls) { return this.path(g, [[xa, ya], [xb, yb]], cls); }
+    point(g, x, y, cls, r = 7) {
+      return svg("circle", { cx: this.x(x).toFixed(1), cy: this.y(y).toFixed(1), r, class: cls }, g);
+    }
+    /* A label at a data point, moved by dx and dy pixels, with an optional subscript. */
+    text(g, x, y, str, cls, opt = {}) {
+      const t = svg("text", {
+        x: (this.x(x) + (opt.dx || 0)).toFixed(1), y: (this.y(y) + (opt.dy || 0)).toFixed(1),
+        "text-anchor": opt.anchor || "start", class: cls,
+      }, g);
+      t.appendChild(document.createTextNode(str));
+      if (opt.sub) svg("tspan", { dy: 5, "font-size": "0.72em" }, t).textContent = opt.sub;
+      return t;
+    }
+    guides(g, x, y) {
+      this.segment(g, this.o.xmin, y, x, y, "guide");
+      this.segment(g, x, this.o.ymin, x, y, "guide");
+    }
+    arrow(g, xa, ya, xb, yb) {
+      return svg("path", {
+        d: `M${this.x(xa).toFixed(1)} ${this.y(ya).toFixed(1)} L${this.x(xb).toFixed(1)} ${this.y(yb).toFixed(1)}`,
+        class: "arrow", "marker-end": `url(#${this.id}a)`,
+      }, g);
+    }
+    /* Labels on the axes, drawn just inside the plot so they never sit on a tick number.
+       flip puts the label on the other side of its guide line, for two marks close together. */
+    ymark(g, y, str, sub, cls, flip) {
+      return this.text(g, this.o.xmin, y, str, "axmark " + (cls || ""), { dx: 6, dy: flip ? 17 : -6, sub });
+    }
+    xmark(g, x, str, sub, cls, flip) {
+      return this.text(g, x, this.o.ymin, str, "axmark " + (cls || ""),
+        { dx: flip ? -5 : 5, dy: -8, sub, anchor: flip ? "end" : "start" });
+    }
+  }
+
+  /* q: prompt, options [{key, text}], answer, why. onDone(right, key) runs once. */
+  function question(host, q, onDone) {
+    const box = h("div", { class: "q" });
+    const list = h("div", { class: "options", role: "group", "aria-label": q.prompt });
+    const fb = h("div", { class: "feedback", hidden: true, "aria-live": "polite" });
+    const buttons = q.options.map((o, i) => {
+      const b = h("button", { class: "opt", type: "button" },
+        h("span", { class: "letter", text: LETTERS[i] }), h("span", { text: o.text }));
+      b.addEventListener("click", () => choose(i));
+      list.appendChild(b);
+      return b;
+    });
+    let done = false;
+    function choose(i) {
+      if (done) return;
+      done = true;
+      const right = q.options[i].key === q.answer;
+      buttons.forEach((b, j) => {
+        b.disabled = true;
+        if (q.options[j].key === q.answer) b.dataset.state = "right";
+      });
+      if (!right) buttons[i].dataset.state = "wrong";
+      fb.className = "feedback " + (right ? "is-right" : "is-wrong");
+      fb.replaceChildren(h("span", { class: "verdict", text: right ? SIM.ui.right : SIM.ui.wrong }), " ",
+        h("span", { text: q.why }));
+      fb.hidden = false;
+      if (onDone) onDone(right, q.options[i].key);
+    }
+    box.append(h("p", { class: "q-prompt", text: q.prompt }), list, fb);
+    host.appendChild(box);
+    return { box, choose };
+  }
+
+  /* items: [{id, label, panel}]. Returns the tab bar. The caller places it. */
+  function tabs(items, initial, onShow) {
+    const bar = h("div", { class: "tabs", role: "tablist" });
+    const btns = items.map((it, i) => {
+      const b = h("button", {
+        class: "tab", type: "button", role: "tab", id: "tab-" + it.id, "aria-controls": "panel-" + it.id,
+      }, it.label);
+      b.addEventListener("click", () => show(i));
+      b.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        e.preventDefault();
+        const n = (i + (e.key === "ArrowRight" ? 1 : items.length - 1)) % items.length;
+        show(n);
+        btns[n].focus();
+      });
+      it.panel.id = "panel-" + it.id;
+      it.panel.setAttribute("role", "tabpanel");
+      it.panel.setAttribute("aria-labelledby", "tab-" + it.id);
+      bar.appendChild(b);
+      return b;
+    });
+    function show(i) {
+      items.forEach((it, j) => {
+        const on = i === j;
+        btns[j].setAttribute("aria-selected", on ? "true" : "false");
+        btns[j].tabIndex = on ? 0 : -1;
+        it.panel.hidden = !on;
+      });
+      if (onShow) onShow(items[i].id);
+    }
+    show(initial || 0);
+    bar.show = show;
+    return bar;
+  }
+
+  /* specs: [{id, label}]. Returns update({id: {now, was}}). */
+  function readouts(host, specs) {
+    const wrap = h("div", { class: "readouts" });
+    const cells = {};
+    for (const s of specs) {
+      const v = h("span", { class: "r-value", "data-readout": s.id });
+      const was = h("span", { class: "r-was" });
+      wrap.appendChild(h("div", { class: "readout" }, h("span", { class: "r-label", text: s.label }), v, " ", was));
+      cells[s.id] = { v, was };
+    }
+    host.appendChild(wrap);
+    return (vals) => {
+      for (const [k, val] of Object.entries(vals)) {
+        if (!cells[k]) continue;
+        cells[k].v.textContent = val.now;
+        cells[k].was.textContent = val.was || "";
+      }
+    };
+  }
+
+  /* spec: id, label, min, max, step, value, left, right. show(v) formats the value. */
+  function slider(host, spec, show, onInput) {
+    const input = h("input", { type: "range", id: spec.id, min: spec.min, max: spec.max, step: spec.step, value: spec.value });
+    const out = h("output", { for: spec.id });
+    host.appendChild(h("div", { class: "slider" },
+      h("label", { for: spec.id, text: spec.label }), input,
+      h("div", { class: "ends" }, h("span", { text: spec.left || "" }), out, h("span", { text: spec.right || "" }))));
+    const update = (fire) => {
+      out.textContent = show ? show(Number(input.value)) : input.value;
+      if (fire && onInput) onInput(Number(input.value));
+    };
+    input.addEventListener("input", () => update(true));
+    update(false);
+    return {
+      input,
+      get value() { return Number(input.value); },
+      set(v, fire = true) { input.value = String(v); update(fire); },
+    };
+  }
+
+  return { h, svg, fmt, fill, tween, expect, Plot, question, tabs, readouts, slider, reduced, showOnNarrow };
+})();
+
+</script>
+<script>
+/* ECON 105, Chapter 3. The shift simulator on the class's shawarma market.
+   Every event, its answers, its numbers and every sentence come from SIM, which
+   sim_ch03_shifts.py builds and checks. This file only draws and moves things. */
+(() => {
+  const { h, Plot, fmt, fill, tween, expect, question, tabs, readouts, slider } = Sim;
+  const M = SIM.market;
+  const U = SIM.ui;
+  const app = document.getElementById("app");
+
+  /* The same algebra as the Python. Qd = a - bP + hd, Qs = c + dP + hs. */
+  const qd = (p, hd) => M.a - M.b * p + hd;
+  const qs = (p, hs) => M.c + M.d * p + hs;
+  const eq = (hd, hs) => {
+    const p = (M.a - M.c + hd - hs) / (M.b + M.d);
+    return { p, q: qd(p, hd) };
+  };
+  const START = eq(0, 0);
+  expect("starting price", START.p, M.p0);
+  expect("starting quantity", START.q, M.q0);
+
+  const priceText = (p) => fmt(p, Number.isInteger(p) ? 0 : 1);
+
+  function newPlot(host) {
+    return new Plot(host, {
+      xmin: 0, xmax: M.xmax, ymin: 0, ymax: M.ymax, xticks: M.xticks, yticks: M.yticks,
+      xlabel: U.xlabel, ylabel: U.ylabel, label: U.graph_title, width: 480, height: 400,
+    });
+  }
+
+  /* Arrows sit where the other curve is far away, and stop short of the new curve. */
+  function shiftArrow(plot, g, curve, h0, h1) {
+    if (h1 === h0) return;
+    const right = h1 > h0;
+    const at = curve === "D" ? (right ? 15.5 : 4) : (right ? 4.5 : 15);
+    const from = curve === "D" ? qd(at, h0) : qs(at, h0);
+    const to = curve === "D" ? qd(at, h1) : qs(at, h1);
+    const stop = right ? -22 : 22;
+    plot.arrow(g, from, at, to + stop, at);
+  }
+
+  /* One picture of the market. st: hd, hs (how far each curve moves), k (0 to 1, how far
+     along the move is), own (a point moving along demand), bare (no equilibrium shown). */
+  function scene(plot, st) {
+    plot.clearAll();
+    const gC = plot.layer("curves");
+    const gG = plot.layer("guides");
+    const gA = plot.layer("arrows");
+    const gP = plot.layer("points", true);
+    const gL = plot.layer("labels", true);
+    const hd = st.hd * st.k;
+    const hs = st.hs * st.k;
+    const movedD = st.hd !== 0;
+    const movedS = st.hs !== 0;
+    const moved = movedD || movedS;
+
+    // The starting curves, then the new ones dashed. A new curve's label sits a little higher
+    // (demand) or lower (supply) than the old one, and of two lines the one on the left takes
+    // its label on its left, so no label sits in the gap touching the other line. A shift of
+    // 100 puts the two lines only about 34 pixels apart.
+    const side = (onLeft) => (onLeft ? { dx: -8, anchor: "end" } : { dx: 8, anchor: "start" });
+    // A falling line runs up and to the left, so a label on its left must sit BELOW the point,
+    // or the line cuts through its top. A rising line moves away from a label on its left.
+    const dSide = (onLeft) => Object.assign(side(onLeft), { dy: onLeft ? 20 : -4 });
+    plot.segment(gC, qd(0, 0), 0, qd(M.ymax, 0), M.ymax, "curve c-demand");
+    plot.segment(gC, qs(0, 0), 0, qs(M.ymax, 0), M.ymax, "curve c-supply");
+    plot.text(gL, qd(1.6, 0), 1.6, U.label_d, "lbl l-demand",
+      Object.assign(dSide(movedD && st.hd > 0), { sub: movedD ? "1" : "" }));
+    plot.text(gL, qs(18.4, 0), 18.4, U.label_s, "lbl l-supply",
+      Object.assign(side(movedS && st.hs > 0), { dy: 6, sub: movedS ? "1" : "" }));
+    if (movedD) {
+      plot.segment(gC, qd(0, hd), 0, qd(M.ymax, hd), M.ymax, "curve c-demand dashed");
+      plot.text(gL, qd(2.9, hd), 2.9, U.label_d, "lbl l-demand", Object.assign(dSide(st.hd < 0), { sub: "2" }));
+    }
+    if (movedS) {
+      plot.segment(gC, qs(0, hs), 0, qs(M.ymax, hs), M.ymax, "curve c-supply dashed");
+      plot.text(gL, qs(17.1, hs), 17.1, U.label_s, "lbl l-supply", Object.assign(side(st.hs < 0), { dy: 6, sub: "2" }));
+    }
+
+    if (st.own) {
+      // the price of the good itself changes, so we move along the demand curve
+      const a = st.own;
+      const p = a.p_from + (a.p_to - a.p_from) * st.k;
+      plot.guides(gG, qd(a.p_from, 0), a.p_from);
+      plot.point(gP, qd(a.p_from, 0), a.p_from, "pt-old");
+      plot.ymark(gL, a.p_from, U.label_p, "1", "old");
+      plot.xmark(gL, qd(a.p_from, 0), U.label_q, "1", "old");
+      if (st.k > 0) {
+        plot.guides(gG, qd(p, 0), p);
+        plot.point(gP, qd(p, 0), p, "pt-new");
+      }
+      if (st.k >= 1) {
+        plot.ymark(gL, a.p_to, U.label_p, "2");
+        plot.xmark(gL, qd(a.p_to, 0), U.label_q, "2");
+      }
+      return;
+    }
+    if (st.bare) return;
+
+    // the old equilibrium, and the new one once the move is complete
+    plot.guides(gG, START.q, START.p);
+    plot.point(gP, START.q, START.p, "pt-old");
+    const done = moved && st.k >= 1;
+    plot.text(gL, START.q, START.p, U.label_e, "lbl l-old", { dx: 12, dy: 6, sub: done ? "1" : "" });
+    if (!done) return;
+    const e2 = eq(st.hd, st.hs);
+    // when the two marks would touch, the old one goes on the far side of its guide line
+    const closeP = e2.p > START.p && e2.p - START.p < 1.5;
+    const closeQ = Math.abs(e2.q - START.q) < 90;
+    plot.ymark(gL, START.p, U.label_p, "1", "old", closeP);
+    plot.xmark(gL, START.q, U.label_q, "1", "old", closeQ && e2.q > START.q);
+    plot.guides(gG, e2.q, e2.p);
+    plot.point(gP, e2.q, e2.p, "pt-new");
+    plot.text(gL, e2.q, e2.p, U.label_e, "lbl l-ink", { dx: 12, dy: 6, sub: "2" });
+    if (Math.abs(e2.p - START.p) > 1e-9) plot.ymark(gL, e2.p, U.label_p, "2", "", e2.p < START.p && START.p - e2.p < 1.5);
+    if (Math.abs(e2.q - START.q) > 1e-9) plot.xmark(gL, e2.q, U.label_q, "2", "", closeQ && e2.q < START.q);
+    shiftArrow(plot, gA, "D", 0, st.hd);
+    shiftArrow(plot, gA, "S", 0, st.hs);
+  }
+
+  /* ---------------------------------------------------------------- the Events tab */
+  const events = SIM.events.slice();
+  let order = events.map((_, i) => i);
+  let pos = 0;
+  let right = 0;
+  let asked = 0;
+  const scored = new Set();
+  let stopAnim = () => {};
+
+  const evPanel = h("section", { class: "layout" });
+  const figCard = h("div", { class: "card figure" });
+  const qCard = h("div", { class: "card" });
+  evPanel.append(figCard, qCard);
+
+  /* Both cases of a double shift in one small table, against the starting market. */
+  function compareTable(ev) {
+    const [a, b] = ev.cases;
+    const row = (label, x, y) => h("tr", null, h("th", { scope: "row", text: label }),
+      h("td", { text: fmt(x) }), h("td", { text: fmt(y) }));
+    const table = h("table", { class: "compare" },
+      h("thead", null, h("tr", null, h("th", { scope: "col", text: "" }),
+        h("th", { scope: "col", text: U.case_demand }), h("th", { scope: "col", text: U.case_supply }))),
+      h("tbody", null, row(U.price, a.p, b.p), row(U.quantity, a.q, b.q)));
+    return h("div", { class: "table-wrap" }, table,
+      h("p", { class: "fig-note", text: fill(U.start_line, { p: fmt(START.p), q: fmt(START.q) }) }));
+  }
+
+  /* The result sentence sits under the graph, so it is read with the picture it describes. */
+  function figureFor(ev, revealed) {
+    stopAnim();
+    figCard.replaceChildren(h("p", { class: "fig-title", text: U.graph_title }));
+    // the own-price event has no new curve and its gray dot is not an equilibrium
+    const legend = revealed && ev.kind === "own" ? U.legend_own : U.legend;
+    const note = revealed
+      ? [h("p", { class: "result", text: ev.result }), h("p", { class: "fig-note", text: legend })]
+      : h("p", { class: "fig-note", text: legend });
+    if (ev.kind === "double" && revealed) {
+      // One graph and a switch between the two cases, since two graphs side by side were too
+      // small to read on a laptop. The table keeps both results in view at once.
+      ev.cases.forEach((c, i) => {
+        const got = eq(c.h_d, c.h_s);
+        expect(ev.id + " case " + i + " price", got.p, c.p);
+        expect(ev.id + " case " + i + " quantity", got.q, c.q);
+      });
+      const pick = h("div", { class: "choice", role: "group", "aria-label": U.cases_label });
+      const btns = [U.case_demand, U.case_supply].map((label, i) =>
+        h("button", { class: "btn", type: "button", "aria-pressed": i === 0 ? "true" : "false", text: label }));
+      pick.append(...btns);
+      const holder = h("div");
+      figCard.append(pick, holder, compareTable(ev), ...[note].flat());
+      const plot = newPlot(holder);
+      const at = (c) => ({ hd: c.h_d, hs: c.h_s });
+      let cur = 0;
+      stopAnim = tween(900, (k) => scene(plot, Object.assign(at(ev.cases[0]), { k })));
+      btns.forEach((b, i) => b.addEventListener("click", () => {
+        if (i === cur) return;
+        stopAnim();
+        const from = ev.cases[cur];
+        const to = ev.cases[i];
+        cur = i;
+        btns.forEach((bb, j) => bb.setAttribute("aria-pressed", j === i ? "true" : "false"));
+        stopAnim = tween(700, (k) => scene(plot, {
+          hd: from.h_d + (to.h_d - from.h_d) * k, hs: from.h_s + (to.h_s - from.h_s) * k, k: 1,
+        }));
+      }));
+      return;
+    }
+    const holder = h("div");
+    figCard.append(holder, ...[note].flat());
+    const plot = newPlot(holder);
+    if (ev.kind === "own") {
+      expect(ev.id + " quantity before", qd(ev.own.p_from, 0), ev.own.q_from);
+      expect(ev.id + " quantity after", qd(ev.own.p_to, 0), ev.own.q_to);
+      if (!revealed) { scene(plot, { hd: 0, hs: 0, k: 0, bare: true }); return; }
+      stopAnim = tween(900, (k) => scene(plot, { hd: 0, hs: 0, k, own: ev.own }));
+      return;
+    }
+    if (!revealed) { scene(plot, { hd: 0, hs: 0, k: 0 }); return; }
+    const hd = ev.kind === "single" ? ev.h_d : 0;
+    const hs = ev.kind === "single" ? ev.h_s : 0;
+    const got = eq(hd, hs);
+    expect(ev.id + " price", got.p, ev.p);
+    expect(ev.id + " quantity", got.q, ev.q);
+    stopAnim = tween(900, (k) => scene(plot, { hd, hs, k }));
+  }
+
+  function score(ev, q, ok) {
+    const id = ev.id + "/" + q;
+    if (scored.has(id)) return;
+    scored.add(id);
+    asked += 1;
+    if (ok) right += 1;
+  }
+
+  function showEvent() {
+    const ev = events[order[pos]];
+    figureFor(ev, false);
+    const top = h("div", { class: "event-top" },
+      h("span", { text: fill(U.event_of, { n: pos + 1, total: events.length }) }),
+      h("span", { class: "score", text: fill(U.score, { right, asked }) }));
+    const text = h("p", { class: "event-text", text: ev.event });
+    const qHost = h("div");
+    const hint = h("p", { class: "note", text: U.answer_first });
+    const back = h("button", { class: "btn secondary", type: "button", text: U.back, disabled: pos === 0 });
+    const replay = h("button", { class: "btn secondary", type: "button", text: U.replay, hidden: true });
+    const next = h("button", { class: "btn", type: "button", text: U.next });
+    const mix = h("button", { class: "btn secondary", type: "button", text: U.mix });
+    back.addEventListener("click", () => { pos = Math.max(0, pos - 1); showEvent(); });
+    next.addEventListener("click", () => {
+      if (pos < events.length - 1) { pos += 1; showEvent(); }
+      else { hint.textContent = U.done; hint.hidden = false; }
+    });
+    mix.addEventListener("click", () => {
+      for (let i = order.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      pos = 0;
+      showEvent();
+    });
+    replay.addEventListener("click", () => figureFor(ev, true));
+    qCard.replaceChildren(top, text, qHost, hint, h("div", { class: "row" }, back, replay, next, mix));
+
+    question(qHost, ev.q1, (ok) => {
+      score(ev, "q1", ok);
+      top.lastChild.textContent = fill(U.score, { right, asked });
+      question(qHost, ev.q2, (ok2) => {
+        score(ev, "q2", ok2);
+        top.lastChild.textContent = fill(U.score, { right, asked });
+        hint.hidden = true;
+        replay.hidden = false;
+        figureFor(ev, true);
+        Sim.showOnNarrow(figCard);
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------- the Explore tab */
+  const exPanel = h("section", { class: "layout" });
+  const exFig = h("div", { class: "card figure" }, h("p", { class: "fig-title", text: U.graph_title }));
+  const exCtl = h("div", { class: "card" }, h("p", { class: "lede", text: U.explore_intro }));
+  exPanel.append(exFig, exCtl);
+  const exPlotHost = h("div");
+  exFig.append(exPlotHost, h("p", { class: "fig-note", text: U.legend }));
+  const exPlot = newPlot(exPlotHost);
+  const shiftText = (v) => (v === 0 ? U.shift_none
+    : v > 0 ? fill(U.shift_right, { n: v }) : fill(U.shift_left, { n: -v }));
+  const sd = slider(exCtl, {
+    id: "explore-demand", label: U.demand, min: -M.explore_max, max: M.explore_max,
+    step: M.explore_step, value: 0, left: U.left, right: U.right_end,
+  }, shiftText, drawExplore);
+  const ss = slider(exCtl, {
+    id: "explore-supply", label: U.supply, min: -M.explore_max, max: M.explore_max,
+    step: M.explore_step, value: 0, left: U.left, right: U.right_end,
+  }, shiftText, drawExplore);
+  const show = readouts(exCtl, [{ id: "price", label: U.price }, { id: "quantity", label: U.quantity }]);
+  const reset = h("button", { class: "btn secondary", type: "button", text: U.reset });
+  reset.addEventListener("click", () => { sd.set(0, false); ss.set(0, false); drawExplore(); });
+  exCtl.appendChild(h("div", { class: "row" }, reset));
+
+  function drawExplore() {
+    const hd = sd.value;
+    const hs = ss.value;
+    scene(exPlot, { hd, hs, k: 1 });
+    const e = eq(hd, hs);
+    show({
+      price: { now: priceText(e.p), was: fill(U.was, { v: priceText(START.p) }) },
+      quantity: { now: fmt(e.q), was: fill(U.was, { v: fmt(START.q) }) },
+    });
+  }
+
+  /* ---------------------------------------------------------------- put it together */
+  const bar = tabs([
+    { id: "events", label: U.tab_events, panel: evPanel },
+    { id: "explore", label: U.tab_explore, panel: exPanel },
+  ], 0);
+  app.append(bar, evPanel, exPanel);
+  showEvent();
+  drawExplore();
+})();
+
+</script>
+
+</body></html>

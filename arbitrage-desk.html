@@ -1,0 +1,1026 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>The Arbitrage Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap">
+<style>
+/* Shared look for the course simulations. build_sims.py puts this into every page.
+
+   Colors are tokens. The full light palette sits on :root, and the two dark blocks repeat only
+   the tokens, so a color never exists in one theme alone. The curve colors follow the course
+   figures, demand blue and supply orange, and were checked with the dataviz validator on
+   2026-09-25. Light #1e5a96 and #b45028 on white, dark #3d8ae0 and #dd7433 on #152131, all
+   checks pass, CVD separation included. The course figures' green for a new equilibrium was
+   dropped, since it could not be told from the supply orange under red-green color blindness.
+   The old point is gray and the new point is ink, so they differ by lightness and by label. */
+
+:root {
+  --ground: #f3f6fa;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+  --ink: #13233a;
+  --ink-2: #3f5068;
+  --muted: #66758a;
+  --rule: #d6dee8;
+  --grid: #e8edf3;
+  --accent: #1a3260;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3eaf5;
+  --focus: #2f6fdb;
+  --demand: #1e5a96;
+  --supply: #b45028;
+  --old: #8b98a9;
+  --good: #1f6b33;
+  --good-bg: #e6f2e8;
+  --bad: #a3261f;
+  --bad-bg: #fbe9e7;
+  /* Lexend, a face designed for reading ease. Atkinson Hyperlegible was tried first, but it
+     slashes its zeros, so 200 read as 2 then two crossed circles on every axis. */
+  --font: "Lexend", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --mono: "Lexend", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0d1520;
+    --surface: #152131;
+    --surface-2: #1b2a3d;
+    --ink: #e8eef6;
+    --ink-2: #b9c6d6;
+    --muted: #8d9cb0;
+    --rule: #2a3b51;
+    --grid: #1f2e41;
+    --accent: #9dbbe6;
+    --accent-ink: #0d1520;
+    --accent-soft: #1f3150;
+    --focus: #8ab4f8;
+    --demand: #3d8ae0;
+    --supply: #dd7433;
+    --old: #6f7f94;
+    --good: #7fcf8f;
+    --good-bg: #173322;
+    --bad: #f19a90;
+    --bad-bg: #3a1c1a;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0d1520;
+  --surface: #152131;
+  --surface-2: #1b2a3d;
+  --ink: #e8eef6;
+  --ink-2: #b9c6d6;
+  --muted: #8d9cb0;
+  --rule: #2a3b51;
+  --grid: #1f2e41;
+  --accent: #9dbbe6;
+  --accent-ink: #0d1520;
+  --accent-soft: #1f3150;
+  --focus: #8ab4f8;
+  --demand: #3d8ae0;
+  --supply: #dd7433;
+  --old: #6f7f94;
+  --good: #7fcf8f;
+  --good-bg: #173322;
+  --bad: #f19a90;
+  --bad-bg: #3a1c1a;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.5;
+}
+[hidden] { display: none !important; }
+
+.sim { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; }
+.sim-head { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+}
+.sim-head h1 {
+  margin: 0; font-size: clamp(26px, 4.2vw, 36px); line-height: 1.15; text-wrap: balance;
+  color: var(--ink);
+}
+.lede { margin: 0; max-width: 65ch; color: var(--ink-2); }
+.sim-foot { margin-top: 28px; font-size: 14px; color: var(--muted); max-width: 70ch; }
+
+/* tabs */
+.tabs {
+  display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-block: 6px 16px;
+  background: var(--surface-2); border-radius: 10px;
+}
+.tab {
+  font: inherit; font-weight: 700; border: 0; border-radius: 7px; cursor: pointer;
+  background: transparent; color: var(--ink-2); padding: 8px 16px; min-height: 42px;
+}
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+
+/* layout */
+.layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .layout.wide-first { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .layout.two-one { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  /* The graph stays in view while the questions beside it scroll, so the move is seen. */
+  .layout > .card.figure {
+    position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
+    max-height: calc(100vh - 24px); overflow-y: auto;
+  }
+}
+.result { margin: 10px 0 0; font-weight: 600; }
+.figure .choice { margin: 4px 0 10px; }
+.table-wrap { overflow-x: auto; margin-top: 10px; }
+.compare { width: 100%; border-collapse: collapse; font-size: 15px; }
+.compare th, .compare td { padding: 6px 10px; border-bottom: 1px solid var(--rule); text-align: left; }
+.compare thead th { color: var(--muted); font-weight: 600; font-size: 13px; }
+.compare td { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.stack { display: grid; gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 16px; }
+.card h2 { margin: 0 0 8px; font-size: 18px; color: var(--ink); }
+.figure svg { display: block; width: 100%; height: auto; }
+.fig-title { margin: 0 0 4px; font-size: 16px; font-weight: 700; color: var(--ink); }
+.fig-note { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+.pair { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 620px) { .pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.trio { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 720px) { .trio { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* text blocks */
+.event-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 14px; }
+.event-text { margin: 6px 0 14px; font-size: 19px; line-height: 1.45; }
+.say { margin: 10px 0 0; }
+.note { font-size: 14px; color: var(--muted); margin: 8px 0 0; }
+
+/* questions */
+.q { display: grid; gap: 10px; margin-top: 14px; }
+.q-prompt { margin: 0; font-weight: 700; }
+.options { display: grid; gap: 8px; }
+.opt {
+  font: inherit; text-align: left; display: flex; gap: 10px; align-items: flex-start;
+  background: var(--surface); color: var(--ink); cursor: pointer;
+  border: 1.5px solid var(--rule); border-radius: 10px; padding: 10px 14px; min-height: 48px;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:disabled { cursor: default; }
+.opt .letter { font-weight: 700; color: var(--muted); min-width: 1.4em; }
+.opt[data-state="right"] { border-color: var(--good); background: var(--good-bg); }
+.opt[data-state="wrong"] { border-color: var(--bad); background: var(--bad-bg); }
+.opt[data-state="right"] .letter { color: var(--good); }
+.opt[data-state="wrong"] .letter { color: var(--bad); }
+.feedback { border-radius: 10px; padding: 10px 14px; background: var(--surface-2); }
+.verdict { font-weight: 700; }
+.feedback.is-right .verdict { color: var(--good); }
+.feedback.is-wrong .verdict { color: var(--bad); }
+
+/* buttons and controls */
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+.btn {
+  font: inherit; font-weight: 700; cursor: pointer; min-height: 44px; padding: 9px 18px;
+  border-radius: 10px; border: 1.5px solid var(--accent); background: var(--accent); color: var(--accent-ink);
+}
+.btn.secondary { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.choice { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice .btn[aria-pressed="false"] { background: transparent; color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.slider { display: grid; gap: 2px; margin-top: 12px; }
+.slider label { font-weight: 700; }
+.slider .ends { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.slider output { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 15px; }
+input[type="range"] { width: 100%; min-height: 34px; accent-color: var(--accent); }
+
+/* readouts */
+.readouts { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-top: 14px; }
+.readout { background: var(--surface-2); border-radius: 10px; padding: 8px 12px; }
+.readout .r-label { display: block; font-size: 13px; color: var(--muted); }
+.readout .r-value { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 19px; color: var(--ink); }
+.readout .r-was { font-size: 13px; color: var(--muted); font-family: var(--mono); }
+
+/* the plots */
+.plot text { font-family: var(--font); fill: var(--ink-2); }
+.plot .tick { font-size: 15px; fill: var(--muted); }
+.plot .axis-line { stroke: var(--ink-2); stroke-width: 1.5; }
+.plot .gridline { stroke: var(--grid); stroke-width: 1; }
+.plot .axis-label { font-size: 15px; fill: var(--ink-2); }
+.plot .curve { fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.plot .curve.dashed { stroke-dasharray: 11 7; }
+.plot .c-demand { stroke: var(--demand); }
+.plot .c-supply { stroke: var(--supply); }
+.plot .c-ink { stroke: var(--ink); }
+.plot .c-old { stroke: var(--old); }
+.plot .lbl { font-size: 19px; font-weight: 700; }
+.plot .l-demand { fill: var(--demand); }
+.plot .l-supply { fill: var(--supply); }
+.plot .l-ink { fill: var(--ink); }
+.plot .l-old { fill: var(--muted); }
+.plot .pt-old { fill: var(--old); stroke: var(--surface); stroke-width: 2.5; }
+.plot .pt-new { fill: var(--ink); stroke: var(--surface); stroke-width: 2.5; }
+.plot .guide { stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 3 4; fill: none; }
+.plot .arrow { stroke: var(--muted); stroke-width: 2.4; fill: none; }
+.plot .arrowhead { fill: var(--muted); }
+.plot .axmark { font-size: 15px; font-weight: 700; fill: var(--ink); }
+.plot .axmark.old { fill: var(--muted); }
+/* A halo in the card's color behind every label, so a line that passes close stays behind it */
+.plot .lbl, .plot .axmark {
+  paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round;
+}
+.plot .band { fill: var(--accent-soft); }
+/* Two graphs side by side print at about 0.6 of their size, so their text is set larger. */
+.pair .plot .tick, .pair .plot .axis-label, .pair .plot .axmark { font-size: 20px; }
+.pair .plot .lbl { font-size: 24px; }
+.trio .plot .tick, .trio .plot .axis-label { font-size: 22px; }
+.trio .plot .lbl { font-size: 24px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+</style>
+<div class="sim">
+<header class="sim-head">
+<div class="eyebrow">ECON 331, Chapter 13</div>
+<h1>The Arbitrage Desk</h1>
+<p class="lede">You are a trader at a bank in Dubai with 1,000,000 dirhams. In each round, read the prices, decide if there is a riskless profit, then trade and see what you end with.</p>
+</header>
+<main id="app"></main>
+<footer class="sim-foot">The dirham peg of 3.6725 dirhams per dollar is real. Every other price and interest rate on this page is made up for practice. Nothing you do on this page is saved or sent anywhere.</footer>
+</div>
+<script>const SIM = {"start":1000000.0,"currencies":{"AED":"dirhams","USD":"dollars","EUR":"euros"},"rounds":[{"id":"cities","kind":"spot","name":"One currency, two cities","setting":"Two banks trade euros for dirhams, one in Dubai and one in Frankfurt. Each bank buys and sells euros at the one price on its screen. Sending money between the two banks is free, and you can trade at both at the same moment.","quotes":[{"id":"dxb","label":"Bank in Dubai","unit":"dirhams per euro","value":4.24,"kind":"rate"},{"id":"fra","label":"Bank in Frankfurt","unit":"dirhams per euro","value":4.2612,"kind":"rate"}],"trades":[{"id":"aed_eur_dxb","label":"Dirhams to euros in Dubai","from":"AED","to":"EUR","quote":"dxb","op":"div","side":"value","where":"Dubai","unit":"dirhams per euro","at":"now","then":"now"},{"id":"aed_eur_fra","label":"Dirhams to euros in Frankfurt","from":"AED","to":"EUR","quote":"fra","op":"div","side":"value","where":"Frankfurt","unit":"dirhams per euro","at":"now","then":"now"},{"id":"eur_aed_dxb","label":"Euros to dirhams in Dubai","from":"EUR","to":"AED","quote":"dxb","op":"mul","side":"value","where":"Dubai","unit":"dirhams per euro","at":"now","then":"now"},{"id":"eur_aed_fra","label":"Euros to dirhams in Frankfurt","from":"EUR","to":"AED","quote":"fra","op":"mul","side":"value","where":"Frankfurt","unit":"dirhams per euro","at":"now","then":"now"}],"predict":{"prompt":"Can you make a riskless profit with these two prices?","options":[{"key":"yes","text":"Yes. Buy euros at the bank where they cost less, and sell them at the other bank"},{"key":"no_free","text":"No. Two banks can charge different prices, and nobody can profit from that"},{"key":"no_risk","text":"No. The price of the euro can change between your two trades, so there is risk"}],"answer":"yes","why":"Both trades happen at the same moment, at prices you can already see, so you know the profit before you trade. That is arbitrage. Now make the trades and count what comes back."},"after":{"kind":"react","button":"The market reacts","quotes":{"dxb":4.2506,"fra":4.2506},"say":"Every trader sees the same gap. Buying euros in Dubai pushes the Dubai price up, and selling euros in Frankfurt pushes the Frankfurt price down. The two prices meet at 4.2506. Your route now ends with exactly 1,000,000.00 dirhams. With no gap there is nothing to trade, and the market is in equilibrium."},"check":{"before":{"aed_eur_dxb,eur_aed_fra":1005000.0,"aed_eur_fra,eur_aed_dxb":995024.8756218905,"aed_eur_dxb,eur_aed_dxb":1000000.0,"aed_eur_fra,eur_aed_fra":1000000.0},"after":{"aed_eur_dxb,eur_aed_fra":1000000.0,"aed_eur_fra,eur_aed_dxb":1000000.0,"aed_eur_dxb,eur_aed_dxb":1000000.0,"aed_eur_fra,eur_aed_fra":1000000.0}}},{"id":"triangle","kind":"spot","name":"Three currencies, the triangle","setting":"One bank in Dubai trades three currencies. The dirham is fixed at 3.6725 dirhams per dollar. The bank also trades dollars for euros, and dirhams for euros directly. Each price works in both directions.","quotes":[{"id":"aed_usd","label":"Dirhams and dollars, the peg","unit":"dirhams per dollar","value":3.6725,"kind":"rate"},{"id":"usd_eur","label":"Dollars and euros","unit":"dollars per euro","value":1.16,"kind":"rate"},{"id":"aed_eur","label":"Dirhams and euros, direct","unit":"dirhams per euro","value":4.2814,"kind":"rate"}],"trades":[{"id":"aed_usd","label":"Dirhams to dollars","from":"AED","to":"USD","quote":"aed_usd","op":"div","side":"value","where":"the peg","unit":"dirhams per dollar","at":"now","then":"now"},{"id":"usd_aed","label":"Dollars to dirhams","from":"USD","to":"AED","quote":"aed_usd","op":"mul","side":"value","where":"the peg","unit":"dirhams per dollar","at":"now","then":"now"},{"id":"usd_eur","label":"Dollars to euros","from":"USD","to":"EUR","quote":"usd_eur","op":"div","side":"value","where":"the bank","unit":"dollars per euro","at":"now","then":"now"},{"id":"eur_usd","label":"Euros to dollars","from":"EUR","to":"USD","quote":"usd_eur","op":"mul","side":"value","where":"the bank","unit":"dollars per euro","at":"now","then":"now"},{"id":"aed_eur","label":"Dirhams to euros","from":"AED","to":"EUR","quote":"aed_eur","op":"div","side":"value","where":"direct","unit":"dirhams per euro","at":"now","then":"now"},{"id":"eur_aed","label":"Euros to dirhams","from":"EUR","to":"AED","quote":"aed_eur","op":"mul","side":"value","where":"direct","unit":"dirhams per euro","at":"now","then":"now"}],"predict":{"prompt":"Is there a riskless profit here?","options":[{"key":"yes","text":"Yes. The direct price of the euro is not equal to the cross rate"},{"key":"no_peg","text":"No. The dirham is fixed to the dollar, so no gap can appear"},{"key":"no_three","text":"No. Three different markets set the three prices, so they never need to match"}],"answer":"yes","why":"The cross rate is the price of the long route, 3.6725 x 1.1600 = 4.2601 dirhams per euro. The bank's direct price is 4.2814. The two prices differ, so one way round the triangle makes a profit and the other way loses. Find the right way."},"after":{"kind":"react","button":"The market reacts","quotes":{"aed_eur":4.2601},"say":"Every trader goes the same way round, dirhams to dollars to euros, then sells the euros for dirhams at the direct price. That pushes the direct price down to the cross rate, 4.2601. Now both ways round end with exactly 1,000,000.00 dirhams. The dirham price of a euro is not chosen by anyone. It is calculated from the other two prices."},"check":{"before":{"aed_usd,usd_eur,eur_aed":1004999.8826318631,"aed_eur,eur_usd,usd_aed":995024.991825104,"aed_usd,usd_aed":1000000.0,"aed_eur,eur_aed":1000000.0},"after":{"aed_usd,usd_eur,eur_aed":1000000.0,"aed_eur,eur_usd,usd_aed":1000000.0,"aed_usd,usd_aed":1000000.0,"aed_eur,eur_aed":1000000.0}}},{"id":"band","kind":"spread","name":"Trading costs make a band","setting":"A new day, and the bank now shows two prices for each pair. It buys at the lower price and sells at the higher price. The difference is the bank's spread, its fee on every trade. The middle rate is halfway between the two.","quotes":[{"id":"aed_usd","label":"Dirhams per dollar","unit":"dirhams per dollar","buy":3.67,"sell":3.675,"mid":3.6725,"kind":"spread"},{"id":"usd_eur","label":"Dollars per euro","unit":"dollars per euro","buy":1.164,"sell":1.166,"mid":1.165,"kind":"spread"},{"id":"aed_eur","label":"Dirhams per euro, direct","unit":"dirhams per euro","buy":4.2798,"sell":4.2858,"mid":4.2828,"kind":"spread"}],"trades":[{"id":"aed_usd","label":"Dirhams to dollars","from":"AED","to":"USD","quote":"aed_usd","op":"div","side":"sell","where":"the bank sells","unit":"dirhams per dollar","at":"now","then":"now"},{"id":"usd_aed","label":"Dollars to dirhams","from":"USD","to":"AED","quote":"aed_usd","op":"mul","side":"buy","where":"the bank buys","unit":"dirhams per dollar","at":"now","then":"now"},{"id":"usd_eur","label":"Dollars to euros","from":"USD","to":"EUR","quote":"usd_eur","op":"div","side":"sell","where":"the bank sells","unit":"dollars per euro","at":"now","then":"now"},{"id":"eur_usd","label":"Euros to dollars","from":"EUR","to":"USD","quote":"usd_eur","op":"mul","side":"buy","where":"the bank buys","unit":"dollars per euro","at":"now","then":"now"},{"id":"aed_eur","label":"Dirhams to euros","from":"AED","to":"EUR","quote":"aed_eur","op":"div","side":"sell","where":"the bank sells","unit":"dirhams per euro","at":"now","then":"now"},{"id":"eur_aed","label":"Euros to dirhams","from":"EUR","to":"AED","quote":"aed_eur","op":"mul","side":"buy","where":"the bank buys","unit":"dirhams per euro","at":"now","then":"now"}],"predict":{"prompt":"You must trade at the bank's two prices. Is there a riskless profit here?","options":[{"key":"yes_gap","text":"Yes. The middle rates still show a gap between the direct price and the cross rate"},{"key":"no_fees","text":"No. The fees on three trades cost more than the gap"},{"key":"yes_more","text":"Yes. Trade a larger amount and the fees stop mattering"}],"answer":"no_fees","why":"At middle rates the cross rate is 3.6725 x 1.1650 = 4.2785, and the direct middle rate is 4.2828, a gap of 0.10 percent. But you never trade at the middle. You pay the bank's higher price when you buy and get its lower price when you sell. Over three trades that costs about 0.22 percent. Try both ways round and count what comes back."},"after":{"kind":"routes","button":"Check both ways round","routes":[{"id":"a","label":"Dirhams to dollars to euros to dirhams","path":["aed_usd","usd_eur","eur_aed"],"end":998774.8100955648},{"id":"b","label":"Dirhams to euros to dollars to dirhams","path":["aed_eur","eur_usd","usd_aed"],"end":996752.0649587008}],"say":"Both ways round lose money. The gap at middle rates is real, but it is smaller than the fees, so it sits inside the band. Nobody trades on it, and no price moves. A gap you can see is not always a profit you can make.","quotes":{}},"check":{"before":{"aed_usd,usd_eur,eur_aed":998774.8100955648,"aed_eur,eur_usd,usd_aed":996752.0649587008,"aed_usd,usd_aed":998639.4557823129,"aed_eur,eur_aed":998600.02799944,"aed_usd,usd_eur,eur_usd,usd_aed":996926.5236111598},"after":{}}},{"id":"covered","kind":"parity","name":"Covered interest parity","setting":"You can keep your 1,000,000 dirhams in a Dubai bank for one year, or put them in euros in a Frankfurt bank. The bank also offers a forward contract. You sign it today, and it fixes the rate at which you sell your euros in one year.","quotes":[{"id":"i_aed","label":"Dirham deposit in Dubai","unit":"percent a year","value":4.5,"kind":"pct"},{"id":"i_eur","label":"Euro deposit in Frankfurt","unit":"percent a year","value":2.5,"kind":"pct"},{"id":"spot","label":"Spot rate, today","unit":"dirhams per euro","value":4.264,"kind":"rate"},{"id":"fwd","label":"Forward rate, for one year from today","unit":"dirhams per euro","value":4.3784,"kind":"rate"}],"trades":[{"id":"dep_aed","label":"Put the dirhams in the Dubai deposit","from":"AED","to":"AED","quote":"i_aed","op":"grow","side":"value","where":"","unit":"","at":"now","then":"year"},{"id":"buy_eur","label":"Dirhams to euros at the spot rate","from":"AED","to":"EUR","quote":"spot","op":"div","side":"value","where":"spot","unit":"dirhams per euro","at":"now","then":"now"},{"id":"dep_eur","label":"Put the euros in the Frankfurt deposit","from":"EUR","to":"EUR","quote":"i_eur","op":"grow","side":"value","where":"","unit":"","at":"now","then":"year"},{"id":"fwd","label":"Sell the euros with the forward contract","from":"EUR","to":"AED","quote":"fwd","op":"mul","side":"value","where":"forward","unit":"dirhams per euro","at":"year","then":"year"}],"predict":{"prompt":"Which route gives more dirhams in one year, with no risk at all?","options":[{"key":"aed","text":"The dirham route, because 4.5 percent is more than 2.5 percent"},{"key":"eur","text":"The euro route with the forward contract"},{"key":"same","text":"Both routes give the same number of dirhams"},{"key":"unknown","text":"You cannot tell, because nobody knows next year's exchange rate"}],"answer":"eur","why":"With the forward contract every rate is known today, so both routes are riskless. The two routes pay the same only at a forward rate of 4.2640 x 1.045 / 1.025 = 4.3472. The bank offers 4.3784, more than that, so the euro route pays more. Try both routes."},"after":{"kind":"react","button":"The market reacts","quotes":{"spot":4.2845,"fwd":4.3681},"say":"Every bank sees the same gap and takes the euro route. Buying euros today pushes the spot rate up to 4.2845. Selling euros forward pushes the forward rate down to 4.3681. Now both routes pay exactly 1,045,000.00 dirhams. This is covered interest parity."},"check":{"before":{"dep_aed":1045000.0,"buy_eur,dep_eur,fwd":1052500.0},"after":{"dep_aed":1045000.0,"buy_eur,dep_eur,fwd":1045000.0}}},{"id":"uncovered","kind":"parity","name":"Uncovered interest parity","setting":"The same two deposits, and the spot rate is 4.2640 again. This time there is no forward contract. You sell your euros in one year at the market rate of that day, and nobody knows that rate today. The banks expect it to be 4.3472 dirhams per euro.","quotes":[{"id":"i_aed","label":"Dirham deposit in Dubai","unit":"percent a year","value":4.5,"kind":"pct"},{"id":"i_eur","label":"Euro deposit in Frankfurt","unit":"percent a year","value":2.5,"kind":"pct"},{"id":"spot","label":"Spot rate, today","unit":"dirhams per euro","value":4.264,"kind":"rate"},{"id":"expected","label":"Expected rate in one year, a guess and not a price","unit":"dirhams per euro","value":4.3472,"kind":"info"}],"trades":[{"id":"dep_aed","label":"Put the dirhams in the Dubai deposit","from":"AED","to":"AED","quote":"i_aed","op":"grow","side":"value","where":"","unit":"","at":"now","then":"year"},{"id":"buy_eur","label":"Dirhams to euros at the spot rate","from":"AED","to":"EUR","quote":"spot","op":"div","side":"value","where":"spot","unit":"dirhams per euro","at":"now","then":"now"},{"id":"dep_eur","label":"Put the euros in the Frankfurt deposit","from":"EUR","to":"EUR","quote":"i_eur","op":"grow","side":"value","where":"","unit":"","at":"now","then":"year"},{"id":"year","label":"Wait one year, then sell the euros at that day's rate","from":"EUR","to":"AED","quote":"draw","op":"mul","side":"value","where":"next year","unit":"dirhams per euro","at":"year","then":"year"}],"predict":{"prompt":"Without a forward contract, is the euro route riskless?","options":[{"key":"yes_expect","text":"Yes. The banks expect 4.3472, so you know what you will get"},{"key":"no","text":"No. You sell the euros at next year's rate, and nobody knows it today"},{"key":"yes_interest","text":"Yes. The euro deposit pays interest, so you cannot lose"}],"answer":"no","why":"At the expected rate of 4.3472 the two routes pay the same, 1,045,000.00 dirhams. But next year's rate can turn out higher or lower than expected. Take the euro route, then play a few more years to see what can happen."},"after":{"kind":"outcomes","button":"Show all six possible rates","play":"Play another year","path":["buy_eur","dep_eur","year"],"values":[3.9472,4.1072,4.2672,4.4272,4.5872,4.7472],"texts":["3.9472","4.1072","4.2672","4.4272","4.5872","4.7472"],"say":"Next year's rate is one of these six, each as likely as the others. Their average is 4.3472, the rate the banks expect. So on average the euro route pays 1,045,000.00 dirhams, the same as the dirham route. In any one year it can pay much more or much less, as your years show. This is uncovered interest parity. The two routes are equal only on average.","quotes":{}},"check":{"before":{"dep_aed":1045000.0,"buy_eur,dep_eur,year":[948846.1538461539,987307.6923076923,1025769.2307692308,1064230.7692307692,1102692.3076923077,1141153.8461538462]},"after":{}}}],"ui":{"right":"Right.","wrong":"Not quite. The right answer is marked.","round_of":"Round {n} of {total}","you_hold":"You hold","your_result":"Your result","not_yet":"Not finished","amount":"{v} {cur}","amount_year":"{v} {cur}, paid in one year","trade_at":"{label}, at {rate}","trade_pct":"{label}, at {v} percent","answer_first":"Answer the question on this round first. Then the trade buttons work.","again":"Start again","back":"Back","next":"Next round","done":"You have played all five rounds. Go back to any round to try it again.","col_quote":"Price","col_rate":"Rate","col_pair":"Pair","col_buy":"The bank buys at","col_sell":"The bank sells at","col_mid":"Middle rate","rate_unit":"{v} {unit}","pct_year":"{v} percent a year","was":"was {v}","log_title":"Your trades","col_step":"Step","col_start":"You start with","col_op":"Multiply or divide?","col_end":"You end with","op_mul":"multiply","op_div":"divide","op_grow":"multiply by {f}","log_rate":"{v} {unit}, {where}","log_pct":"{v} percent interest","line_rate":"{start}, {op} {rate}, gives {end}.","line_grow":"{start}, multiply by {f} for {v} percent interest, gives {end}.","by_div":"divide by","by_mul":"multiply by","no_trades":"No trades yet.","end_profit":"You end with {end} dirhams, a profit of {v} dirhams, or {pct} percent.","end_loss":"You end with {end} dirhams, a loss of {v} dirhams, or {pct} percent.","end_even":"You end with {end} dirhams, exactly what you started with.","year_aed":"In one year you have {end} dirhams from the dirham route.","year_more":"In one year you have {end} dirhams. The dirham route pays {base}, so you have {v} dirhams more.","year_less":"In one year you have {end} dirhams. The dirham route pays {base}, so you have {v} dirhams less.","year_same":"In one year you have {end} dirhams, the same as the dirham route.","results_title":"Your best result in each round, in dirhams","best_label":"Round {n}","best_none":"not played","best_avg":"{v}, average of {n} years","col_route":"Way round","col_ends":"Ends with","col_result":"Profit or loss","years_title":"Your years","col_year":"Year","col_rate_year":"Rate that year","col_pays":"The euro route pays","col_vs":"Against the dirham route","six_title":"The six possible rates","col_six":"Rate next year","six_avg":"Average, {v}"}};</script>
+<script>
+/* Shared behavior for the course simulations. build_sims.py puts this into every page, after
+   the SIM data and before the simulation's own script.
+
+     Sim.h, Sim.svg   build an HTML or an SVG element
+     Sim.Plot         one set of axes with a data scale, and helpers to draw on it
+     Sim.question     a multiple-choice question that marks itself and shows the reason
+     Sim.tabs         a row of tabs that shows one panel at a time
+     Sim.readouts     a row of labelled numbers
+     Sim.slider       a labelled range input
+     Sim.tween        a short animation that respects reduced motion
+     Sim.expect       compares a number the page computed with the one Python proved
+     Sim.fmt, Sim.fill  number formatting and {name} templates
+
+   Every word a student reads comes from SIM, which the builder has checked against the
+   writing rules. Nothing here writes a sentence of its own. */
+"use strict";
+
+const Sim = (() => {
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const LETTERS = "ABCDEFGH";
+
+  function setAttrs(e, attrs) {
+    if (!attrs) return e;
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v === undefined || v === null || v === false) continue;
+      e.setAttribute(k, v === true ? "" : String(v));
+    }
+    return e;
+  }
+
+  function svg(tag, attrs, parent) {
+    const e = setAttrs(document.createElementNS(SVGNS, tag), attrs);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  function h(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    if (attrs) {
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v === undefined || v === null || v === false) continue;
+        if (k === "class") e.className = v;
+        else if (k === "text") e.textContent = v;
+        else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2), v);
+        else e.setAttribute(k, v === true ? "" : String(v));
+      }
+    }
+    for (const kid of kids.flat(Infinity)) {
+      if (kid === null || kid === undefined || kid === false) continue;
+      const leaf = typeof kid === "string" || typeof kid === "number";
+      e.appendChild(leaf ? document.createTextNode(String(kid)) : kid);
+    }
+    return e;
+  }
+
+  function fmt(x, dp = 0) {
+    return Number(x).toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  }
+
+  function fill(template, vals) {
+    return String(template).replace(/\{(\w+)\}/g, (m, k) =>
+      Object.prototype.hasOwnProperty.call(vals, k) ? String(vals[k]) : m);
+  }
+
+  const reduced = () =>
+    !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  /* On a narrow screen the graph sits above the questions, out of sight once a student has
+     scrolled down to answer. Bring it back into view before it moves. The jump is instant,
+     since a smooth scroll was seen to start a second late and miss most of the animation. */
+  function showOnNarrow(el) {
+    const narrow = window.matchMedia && window.matchMedia("(max-width: 899px)").matches;
+    if (narrow && el && el.scrollIntoView) el.scrollIntoView({ behavior: "auto", block: "start" });
+  }
+
+  /* Runs onFrame(k) with k easing from 0 to 1. Returns a function that stops it.
+     A browser stops drawing frames in a hidden tab or a hidden frame, which once left a graph
+     frozen half way. A timer finishes the move if the frames have not, so the end state
+     always arrives. */
+  function tween(ms, onFrame, onDone) {
+    let stopped = false;
+    let finished = false;
+    const finish = () => {
+      if (finished || stopped) return;
+      finished = true;
+      onFrame(1);
+      if (onDone) onDone();
+    };
+    if (reduced() || ms <= 0) {
+      finish();
+      return () => {};
+    }
+    let start = null;
+    const step = (ts) => {
+      if (stopped || finished) return;
+      if (start === null) start = ts;
+      const k = Math.min(1, (ts - start) / ms);
+      if (k >= 1) { finish(); return; }
+      onFrame(k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    const timer = setTimeout(finish, ms + 400);
+    return () => { stopped = true; clearTimeout(timer); };
+  }
+
+  /* The page's own number against the one check_numbers() proved. A mismatch goes to the
+     console, where the browser test looks for it. */
+  function expect(label, got, want, tol = 1e-6) {
+    if (!(Math.abs(got - want) <= tol)) {
+      console.error("SIM CHECK FAILED", label, "page", got, "python", want);
+      return false;
+    }
+    return true;
+  }
+
+  let plotSeq = 0;
+
+  class Plot {
+    /* o: xmin, xmax, ymin, ymax, xticks, yticks, xfmt, yfmt, xlabel, ylabel, label,
+          width, height, m (margins l, r, t, b) */
+    constructor(host, o) {
+      this.o = Object.assign({ width: 480, height: 400, xfmt: (v) => fmt(v), yfmt: (v) => fmt(v) }, o);
+      this.o.m = Object.assign({ l: 56, r: 18, t: 34, b: 50 }, o.m || {});
+      const { width, height } = this.o;
+      this.id = "plot" + (++plotSeq);
+      this.root = svg("svg", {
+        viewBox: `0 0 ${width} ${height}`, class: "plot", role: "img", "aria-label": o.label || "",
+      }, host);
+      const defs = svg("defs", null, this.root);
+      const clip = svg("clipPath", { id: this.id + "c" }, defs);
+      svg("rect", { x: this.x0, y: this.y1, width: this.x1 - this.x0, height: this.y0 - this.y1 }, clip);
+      const mk = svg("marker", {
+        id: this.id + "a", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 6, markerHeight: 6,
+        orient: "auto-start-reverse",
+      }, defs);
+      svg("path", { d: "M0,0 L10,5 L0,10 z", class: "arrowhead" }, mk);
+      this.gGrid = svg("g", null, this.root);
+      this.gData = svg("g", { "clip-path": `url(#${this.id}c)` }, this.root);
+      this.gAxis = svg("g", null, this.root);
+      this.gTop = svg("g", null, this.root);
+      this.layers = new Map();
+      this.drawAxes();
+    }
+
+    get x0() { return this.o.m.l; }
+    get x1() { return this.o.width - this.o.m.r; }
+    get y0() { return this.o.height - this.o.m.b; }
+    get y1() { return this.o.m.t; }
+
+    x(v) { const o = this.o; return this.x0 + ((v - o.xmin) / (o.xmax - o.xmin)) * (this.x1 - this.x0); }
+    y(v) { const o = this.o; return this.y0 - ((v - o.ymin) / (o.ymax - o.ymin)) * (this.y0 - this.y1); }
+
+    drawAxes() {
+      const o = this.o;
+      for (const t of o.yticks || []) {
+        svg("line", { x1: this.x0, x2: this.x1, y1: this.y(t), y2: this.y(t), class: "gridline" }, this.gGrid);
+        svg("text", { x: this.x0 - 8, y: this.y(t) + 5, "text-anchor": "end", class: "tick" }, this.gAxis)
+          .textContent = o.yfmt(t);
+      }
+      for (const t of o.xticks || []) {
+        svg("line", { x1: this.x(t), x2: this.x(t), y1: this.y0, y2: this.y1, class: "gridline" }, this.gGrid);
+        svg("text", { x: this.x(t), y: this.y0 + 21, "text-anchor": "middle", class: "tick" }, this.gAxis)
+          .textContent = o.xfmt(t);
+      }
+      svg("line", { x1: this.x0, x2: this.x0, y1: this.y0, y2: this.y1 - 6, class: "axis-line" }, this.gAxis);
+      svg("line", { x1: this.x0, x2: this.x1 + 6, y1: this.y0, y2: this.y0, class: "axis-line" }, this.gAxis);
+      if (o.xlabel) {
+        svg("text", { x: this.x1, y: o.height - 6, "text-anchor": "end", class: "axis-label" }, this.gAxis)
+          .textContent = o.xlabel;
+      }
+      if (o.ylabel) {
+        svg("text", { x: 4, y: 18, "text-anchor": "start", class: "axis-label" }, this.gAxis)
+          .textContent = o.ylabel;
+      }
+    }
+
+    /* Named layers, cleared and redrawn as the state changes. "top" layers are not clipped. */
+    layer(name, top) {
+      if (!this.layers.has(name)) this.layers.set(name, svg("g", null, top ? this.gTop : this.gData));
+      return this.layers.get(name);
+    }
+    clear(name) { const g = this.layers.get(name); if (g) g.replaceChildren(); }
+    clearAll() { for (const g of this.layers.values()) g.replaceChildren(); }
+
+    path(g, pts, cls) {
+      const d = pts.map((p, i) => (i ? "L" : "M") + this.x(p[0]).toFixed(1) + " " + this.y(p[1]).toFixed(1)).join(" ");
+      return svg("path", { d, class: cls }, g);
+    }
+    segment(g, xa, ya, xb, yb, cls) { return this.path(g, [[xa, ya], [xb, yb]], cls); }
+    point(g, x, y, cls, r = 7) {
+      return svg("circle", { cx: this.x(x).toFixed(1), cy: this.y(y).toFixed(1), r, class: cls }, g);
+    }
+    /* A label at a data point, moved by dx and dy pixels, with an optional subscript. */
+    text(g, x, y, str, cls, opt = {}) {
+      const t = svg("text", {
+        x: (this.x(x) + (opt.dx || 0)).toFixed(1), y: (this.y(y) + (opt.dy || 0)).toFixed(1),
+        "text-anchor": opt.anchor || "start", class: cls,
+      }, g);
+      t.appendChild(document.createTextNode(str));
+      if (opt.sub) svg("tspan", { dy: 5, "font-size": "0.72em" }, t).textContent = opt.sub;
+      return t;
+    }
+    guides(g, x, y) {
+      this.segment(g, this.o.xmin, y, x, y, "guide");
+      this.segment(g, x, this.o.ymin, x, y, "guide");
+    }
+    arrow(g, xa, ya, xb, yb) {
+      return svg("path", {
+        d: `M${this.x(xa).toFixed(1)} ${this.y(ya).toFixed(1)} L${this.x(xb).toFixed(1)} ${this.y(yb).toFixed(1)}`,
+        class: "arrow", "marker-end": `url(#${this.id}a)`,
+      }, g);
+    }
+    /* Labels on the axes, drawn just inside the plot so they never sit on a tick number.
+       flip puts the label on the other side of its guide line, for two marks close together. */
+    ymark(g, y, str, sub, cls, flip) {
+      return this.text(g, this.o.xmin, y, str, "axmark " + (cls || ""), { dx: 6, dy: flip ? 17 : -6, sub });
+    }
+    xmark(g, x, str, sub, cls, flip) {
+      return this.text(g, x, this.o.ymin, str, "axmark " + (cls || ""),
+        { dx: flip ? -5 : 5, dy: -8, sub, anchor: flip ? "end" : "start" });
+    }
+  }
+
+  /* q: prompt, options [{key, text}], answer, why. onDone(right, key) runs once. */
+  function question(host, q, onDone) {
+    const box = h("div", { class: "q" });
+    const list = h("div", { class: "options", role: "group", "aria-label": q.prompt });
+    const fb = h("div", { class: "feedback", hidden: true, "aria-live": "polite" });
+    const buttons = q.options.map((o, i) => {
+      const b = h("button", { class: "opt", type: "button" },
+        h("span", { class: "letter", text: LETTERS[i] }), h("span", { text: o.text }));
+      b.addEventListener("click", () => choose(i));
+      list.appendChild(b);
+      return b;
+    });
+    let done = false;
+    function choose(i) {
+      if (done) return;
+      done = true;
+      const right = q.options[i].key === q.answer;
+      buttons.forEach((b, j) => {
+        b.disabled = true;
+        if (q.options[j].key === q.answer) b.dataset.state = "right";
+      });
+      if (!right) buttons[i].dataset.state = "wrong";
+      fb.className = "feedback " + (right ? "is-right" : "is-wrong");
+      fb.replaceChildren(h("span", { class: "verdict", text: right ? SIM.ui.right : SIM.ui.wrong }), " ",
+        h("span", { text: q.why }));
+      fb.hidden = false;
+      if (onDone) onDone(right, q.options[i].key);
+    }
+    box.append(h("p", { class: "q-prompt", text: q.prompt }), list, fb);
+    host.appendChild(box);
+    return { box, choose };
+  }
+
+  /* items: [{id, label, panel}]. Returns the tab bar. The caller places it. */
+  function tabs(items, initial, onShow) {
+    const bar = h("div", { class: "tabs", role: "tablist" });
+    const btns = items.map((it, i) => {
+      const b = h("button", {
+        class: "tab", type: "button", role: "tab", id: "tab-" + it.id, "aria-controls": "panel-" + it.id,
+      }, it.label);
+      b.addEventListener("click", () => show(i));
+      b.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        e.preventDefault();
+        const n = (i + (e.key === "ArrowRight" ? 1 : items.length - 1)) % items.length;
+        show(n);
+        btns[n].focus();
+      });
+      it.panel.id = "panel-" + it.id;
+      it.panel.setAttribute("role", "tabpanel");
+      it.panel.setAttribute("aria-labelledby", "tab-" + it.id);
+      bar.appendChild(b);
+      return b;
+    });
+    function show(i) {
+      items.forEach((it, j) => {
+        const on = i === j;
+        btns[j].setAttribute("aria-selected", on ? "true" : "false");
+        btns[j].tabIndex = on ? 0 : -1;
+        it.panel.hidden = !on;
+      });
+      if (onShow) onShow(items[i].id);
+    }
+    show(initial || 0);
+    bar.show = show;
+    return bar;
+  }
+
+  /* specs: [{id, label}]. Returns update({id: {now, was}}). */
+  function readouts(host, specs) {
+    const wrap = h("div", { class: "readouts" });
+    const cells = {};
+    for (const s of specs) {
+      const v = h("span", { class: "r-value", "data-readout": s.id });
+      const was = h("span", { class: "r-was" });
+      wrap.appendChild(h("div", { class: "readout" }, h("span", { class: "r-label", text: s.label }), v, " ", was));
+      cells[s.id] = { v, was };
+    }
+    host.appendChild(wrap);
+    return (vals) => {
+      for (const [k, val] of Object.entries(vals)) {
+        if (!cells[k]) continue;
+        cells[k].v.textContent = val.now;
+        cells[k].was.textContent = val.was || "";
+      }
+    };
+  }
+
+  /* spec: id, label, min, max, step, value, left, right. show(v) formats the value. */
+  function slider(host, spec, show, onInput) {
+    const input = h("input", { type: "range", id: spec.id, min: spec.min, max: spec.max, step: spec.step, value: spec.value });
+    const out = h("output", { for: spec.id });
+    host.appendChild(h("div", { class: "slider" },
+      h("label", { for: spec.id, text: spec.label }), input,
+      h("div", { class: "ends" }, h("span", { text: spec.left || "" }), out, h("span", { text: spec.right || "" }))));
+    const update = (fire) => {
+      out.textContent = show ? show(Number(input.value)) : input.value;
+      if (fire && onInput) onInput(Number(input.value));
+    };
+    input.addEventListener("input", () => update(true));
+    update(false);
+    return {
+      input,
+      get value() { return Number(input.value); },
+      set(v, fire = true) { input.value = String(v); update(fire); },
+    };
+  }
+
+  return { h, svg, fmt, fill, tween, expect, Plot, question, tabs, readouts, slider, reduced, showOnNarrow };
+})();
+
+</script>
+<script>
+/* ECON 331, Chapter 13. The Arbitrage Desk, a trading game in five rounds.
+   Every price, route, answer and sentence comes from SIM, which sim_ch13_arbitrage.py builds and
+   proves in Fractions. This file only runs the trades and draws the board.
+
+   A trade changes the whole holding from one currency to another at one quoted price, the way
+   the decks' tables walk a route one step at a time. Amounts are never rounded, only shown to
+   the cent, so a route that should give back exactly 1,000,000 dirhams does. */
+(() => {
+  const { h, fmt, fill, tween, expect, question, readouts } = Sim;
+  const U = SIM.ui;
+  const CUR = SIM.currencies;
+  const START = SIM.start;
+  const ROUNDS = SIM.rounds;
+  const app = document.getElementById("app");
+
+  const money = (v) => fmt(v, 2);
+  const four = (v) => fmt(v, 4);
+  /* Less than half a cent is float noise, not money. */
+  const cents = (v) => {
+    const c = Math.round(v * 100) / 100;
+    return Math.abs(c) < 0.005 ? 0 : c;
+  };
+  const signed = (v) => (v > 0 ? "+" : v < 0 ? "-" : "") + money(Math.abs(v));
+  const amountText = (v, cur, when) =>
+    fill(when === "year" ? U.amount_year : U.amount, { v: money(v), cur: CUR[cur] });
+
+  /* One trade, the same arithmetic as run() in the Python. */
+  const apply = (t, amt, p) => (t.op === "div" ? amt / p : t.op === "mul" ? amt * p : amt * (1 + p / 100));
+
+  function runOn(r, quotes, ids, drawn) {
+    let amt = START;
+    for (const id of ids) {
+      const t = r.trades.find((x) => x.id === id);
+      amt = apply(t, amt, t.quote === "draw" ? drawn : quotes[t.quote][t.side]);
+    }
+    return amt;
+  }
+
+  /* Every route the Python proved, run here on the same quotes as soon as the page loads. */
+  function selfCheck() {
+    for (const r of ROUNDS) {
+      const q0 = Object.fromEntries(r.quotes.map((q) => [q.id, q]));
+      const q1 = Object.fromEntries(r.quotes.map((q) => [q.id,
+        Object.assign({}, q, q.id in r.after.quotes ? { value: r.after.quotes[q.id] } : {})]));
+      for (const [key, want] of Object.entries(r.check.before)) {
+        const ids = key.split(",");
+        if (Array.isArray(want)) {
+          want.forEach((w, i) => expect(r.id + " " + key + " " + i, runOn(r, q0, ids, r.after.values[i]), w));
+        } else {
+          expect(r.id + " " + key, runOn(r, q0, ids), want);
+        }
+      }
+      for (const [key, want] of Object.entries(r.check.after)) {
+        expect(r.id + " " + key + " after", runOn(r, q1, key.split(",")), want);
+      }
+    }
+  }
+
+  /* Round 5 draws next year's rate. A test can set the draws in advance. */
+  function drawIndex(n) {
+    const t = window.SIM_TEST_DRAWS;
+    if (Array.isArray(t) && t.length) return t.shift();
+    return Math.floor(Math.random() * n);
+  }
+
+  function table(head, rows) {
+    return h("table", { class: "compare" },
+      h("thead", null, h("tr", null, head.map((c) => h("th", { scope: "col", text: c })))),
+      h("tbody", null, rows.map((cells) => h("tr", null,
+        cells.map((c, i) => (i === 0 ? h("th", { scope: "row" }, c) : h("td", null, c)))))));
+  }
+
+  /* A heading over a table further down a card. The first build set it straight under the line
+     above, with no space between them. */
+  const subhead = (text) => h("p", { class: "fig-title", text, style: "margin-top: 18px" });
+
+  const best = ROUNDS.map(() => null);
+  const years = [];
+  let pos = 0;
+  let st = null;
+  let stop = () => {};
+  const el = {};
+
+  /* ---------------------------------------------------------------- the three cards */
+  const layout = h("section", { class: "layout" });
+  const board = h("div", { class: "card" });
+  const side = h("div", { class: "card" });
+  // Side by side on a wide screen. In one column the round's question comes first, then the
+  // board, which answering brings into view.
+  const oneColumn = window.matchMedia ? window.matchMedia("(max-width: 899px)") : { matches: false };
+  const arrange = () => (oneColumn.matches ? layout.append(side, board) : layout.append(board, side));
+  arrange();
+  if (oneColumn.addEventListener) oneColumn.addEventListener("change", arrange);
+  const results = h("div", { class: "card" }, h("p", { class: "fig-title", text: U.results_title }));
+  app.append(layout, results);
+  const showBest = readouts(results, ROUNDS.map((r, i) => ({ id: "r" + i, label: fill(U.best_label, { n: i + 1 }) })));
+
+  function drawBest() {
+    const vals = {};
+    ROUNDS.forEach((r, i) => {
+      let now = U.best_none;
+      if (r.after.kind === "outcomes" && years.length) {
+        const avg = years.reduce((s, y) => s + y.diff, 0) / years.length;
+        now = fill(U.best_avg, { v: signed(cents(avg)), n: years.length });
+      } else if (best[i] !== null) {
+        now = signed(best[i]);
+      }
+      vals["r" + i] = { now };
+    });
+    showBest(vals);
+  }
+
+  /* ---------------------------------------------------------------- one round */
+  const tradeById = (id) => st.r.trades.find((t) => t.id === id);
+  const priceOf = (t) => st.q[t.quote][t.side];
+  const dirhamRoute = () => START * (1 + st.q.i_aed.value / 100);
+
+  function restart() {
+    Object.assign(st, { cur: "AED", amt: START, when: "now", path: [], rows: [], done: false, drawn: null });
+    el.result.hidden = true;
+  }
+
+  /* The sentence under the board once the money is back in dirhams, and the number behind it,
+     the profit against 1,000,000 or, with interest, the gain against the dirham route. */
+  function outcome() {
+    if (st.r.kind !== "parity") {
+      const p = cents(st.amt - START);
+      if (p === 0) return { v: 0, text: fill(U.end_even, { end: money(st.amt) }) };
+      return {
+        v: p,
+        text: fill(p > 0 ? U.end_profit : U.end_loss,
+          { end: money(st.amt), v: money(Math.abs(p)), pct: fmt((Math.abs(p) / START) * 100, 2) }),
+      };
+    }
+    if (st.path.length === 1) return { v: 0, text: fill(U.year_aed, { end: money(st.amt) }) };
+    const base = dirhamRoute();
+    const gain = cents(st.amt - base);
+    if (gain === 0) return { v: 0, text: fill(U.year_same, { end: money(st.amt) }) };
+    return {
+      v: gain,
+      text: fill(gain > 0 ? U.year_more : U.year_less,
+        { end: money(st.amt), base: money(base), v: money(Math.abs(gain)) }),
+    };
+  }
+
+  function step(t) {
+    let p;
+    if (t.quote === "draw") {
+      st.drawn = drawIndex(st.r.after.values.length);
+      p = st.r.after.values[st.drawn];
+    } else {
+      p = priceOf(t);
+    }
+    const amt = apply(t, st.amt, p);
+    st.rows.push({ t, p, start: { amt: st.amt, cur: st.cur, when: st.when }, end: { amt, cur: t.to, when: t.then } });
+    Object.assign(st, { amt, cur: t.to, when: t.then });
+    st.path.push(t.id);
+    finish();
+  }
+
+  function runPath(ids) {
+    for (const id of ids) step(tradeById(id));
+    drawBoard();
+  }
+
+  function doTrade(t) {
+    if (!st.answered || st.busy || st.done || t.from !== st.cur || t.at !== st.when) return;
+    step(t);
+    drawBoard();
+  }
+
+  function finish() {
+    const r = st.r;
+    const endWhen = r.kind === "parity" ? "year" : "now";
+    if (st.cur !== "AED" || st.when !== endWhen || !st.path.length) return;
+    st.done = true;
+    const key = st.path.join(",");
+    const known = st.reacted ? r.check.after : r.check.before;
+    if (Object.prototype.hasOwnProperty.call(known, key)) {
+      const want = Array.isArray(known[key]) ? known[key][st.drawn] : known[key];
+      expect(r.id + " " + key + (st.reacted ? " after" : ""), st.amt, want);
+    }
+    const res = outcome();
+    el.result.textContent = res.text;
+    el.result.hidden = false;
+    if (!st.reacted) {
+      if (best[pos] === null || res.v > best[pos]) best[pos] = res.v;
+      if (!st.bestPath || res.v > st.bestV) { st.bestPath = st.path.slice(); st.bestV = res.v; }
+    }
+    if (r.after.kind === "outcomes" && st.drawn !== null) {
+      years.push({ text: r.after.texts[st.drawn], end: st.amt, diff: st.amt - dirhamRoute() });
+      drawYears();
+      el.play.hidden = false;
+    }
+    drawBest();
+  }
+
+  /* ---------------------------------------------------------------- after the trades */
+  function afterAction() {
+    if (st.busy) return;
+    const kind = st.r.after.kind;
+    if (kind === "react") react();
+    else if (kind === "routes") showRoutes();
+    else showSix();
+  }
+
+  /* Rounds 1, 2 and 4. The quotes slide to where the gap is gone, then the best route runs again. */
+  function react() {
+    const A = st.r.after;
+    if (st.reacted || !st.bestPath) return;
+    st.busy = true;
+    const from = {};
+    for (const id of Object.keys(A.quotes)) {
+      from[id] = st.q[id].value;
+      st.was[id] = st.q[id].value;
+    }
+    Sim.showOnNarrow(board);
+    drawBoard();
+    stop = tween(1200, (k) => {
+      for (const [id, v] of Object.entries(A.quotes)) st.q[id].value = k >= 1 ? v : from[id] + (v - from[id]) * k;
+      drawQuotes();
+      drawButtons();
+    }, () => {
+      st.reacted = true;
+      st.busy = false;
+      restart();
+      runPath(st.bestPath);
+      el.say.textContent = A.say;
+      el.say.hidden = false;
+      drawBoard();
+    });
+  }
+
+  /* Round 3. Both ways round at the bank's prices, and nothing moves. */
+  function showRoutes() {
+    const r = st.r;
+    const A = r.after;
+    const rows = A.routes.map((ro) => {
+      let amt = START;
+      for (const id of ro.path) { const t = tradeById(id); amt = apply(t, amt, priceOf(t)); }
+      expect(r.id + " route " + ro.id, amt, ro.end);
+      return [ro.label, money(amt), signed(cents(amt - START))];
+    });
+    el.extra.replaceChildren(h("div", { class: "table-wrap" }, table([U.col_route, U.col_ends, U.col_result], rows)));
+    el.say.textContent = A.say;
+    el.say.hidden = false;
+    st.afterShown = true;
+    drawBoard();
+  }
+
+  /* Round 5. All six rates, what the euro route pays at each, and their average. */
+  function showSix() {
+    const r = st.r;
+    const A = r.after;
+    const base = dirhamRoute();
+    const want = r.check.before[A.path.join(",")];
+    let sum = 0;
+    const rows = A.values.map((v, i) => {
+      const pays = runOn(r, st.q, A.path, v);
+      expect(r.id + " six " + i, pays, want[i]);
+      sum += pays;
+      return [A.texts[i], money(pays), signed(cents(pays - base))];
+    });
+    const avgRate = A.values.reduce((s, v) => s + v, 0) / A.values.length;
+    const avgPays = sum / A.values.length;
+    expect(r.id + " average rate", avgRate, st.q.expected.value);
+    expect(r.id + " average pays", avgPays, base);
+    rows.push([fill(U.six_avg, { v: four(avgRate) }), money(avgPays), signed(cents(avgPays - base))]);
+    el.six.replaceChildren(subhead(U.six_title),
+      h("div", { class: "table-wrap" }, table([U.col_six, U.col_pays, U.col_vs], rows)));
+    el.say.textContent = A.say;
+    el.say.hidden = false;
+    st.afterShown = true;
+    drawBoard();
+  }
+
+  function drawYears() {
+    if (!el.years) return;
+    if (!years.length) { el.years.replaceChildren(); return; }
+    const first = Math.max(0, years.length - 12);
+    const rows = years.slice(first).map((y, i) =>
+      [String(first + i + 1), y.text, money(y.end), signed(cents(y.diff))]);
+    el.years.replaceChildren(subhead(U.years_title),
+      h("div", { class: "table-wrap" }, table([U.col_year, U.col_rate_year, U.col_pays, U.col_vs], rows)));
+  }
+
+  /* ---------------------------------------------------------------- drawing the board */
+  function drawQuotes() {
+    const r = st.r;
+    const was = (id) => (id in st.was && Math.abs(st.was[id] - st.q[id].value) > 1e-12
+      ? [" ", h("span", { class: "note", text: fill(U.was, { v: four(st.was[id]) }) })] : []);
+    let t;
+    if (r.kind === "spread") {
+      t = table([U.col_pair, U.col_buy, U.col_sell, U.col_mid],
+        r.quotes.map((q) => [q.label, four(st.q[q.id].buy), four(st.q[q.id].sell), four(st.q[q.id].mid)]));
+    } else {
+      t = table([U.col_quote, U.col_rate], r.quotes.map((q) => {
+        const v = st.q[q.id].value;
+        const txt = q.kind === "pct" ? fill(U.pct_year, { v: fmt(v, 1) }) : fill(U.rate_unit, { v: four(v), unit: q.unit });
+        return [q.label, [txt, ...was(q.id)]];
+      }));
+    }
+    el.quotes.replaceChildren(t);
+  }
+
+  function drawButtons() {
+    el.buttons.replaceChildren(...st.r.trades.map((t) => {
+      const can = st.answered && !st.busy && !st.done && t.from === st.cur && t.at === st.when;
+      let text = t.label;
+      if (t.quote !== "draw") {
+        const p = priceOf(t);
+        text = t.op === "grow" ? fill(U.trade_pct, { label: t.label, v: fmt(p, 1) })
+          : fill(U.trade_at, { label: t.label, rate: four(p) });
+      }
+      const b = h("button", { class: "btn secondary", type: "button", text, disabled: !can, "data-trade": t.id });
+      b.addEventListener("click", () => doTrade(t));
+      return b;
+    }));
+  }
+
+  /* The decks' own table on a laptop. On a phone the five columns do not fit, and the last one,
+     what you end with, was cut off, so each step becomes one line instead. */
+  const narrow = window.matchMedia ? window.matchMedia("(max-width: 619px)") : { matches: false };
+
+  function drawLog() {
+    const steps = st.rows.map((row) => {
+      const t = row.t;
+      return {
+        start: amountText(row.start.amt, row.start.cur, row.start.when),
+        end: amountText(row.end.amt, row.end.cur, row.end.when),
+        rate: t.op === "grow" ? fill(U.log_pct, { v: fmt(row.p, 1) })
+          : fill(U.log_rate, { v: four(row.p), unit: t.unit, where: t.where }),
+        op: t.op === "div" ? U.op_div : t.op === "mul" ? U.op_mul : fill(U.op_grow, { f: fmt(1 + row.p / 100, 3) }),
+        t, p: row.p,
+      };
+    });
+    if (narrow.matches) {
+      el.log.replaceChildren(steps.length
+        ? h("ol", { class: "say" }, steps.map((s) => h("li", {
+          text: s.t.op === "grow"
+            ? fill(U.line_grow, { start: s.start, f: fmt(1 + s.p / 100, 3), v: fmt(s.p, 1), end: s.end })
+            : fill(U.line_rate, { start: s.start, op: s.t.op === "div" ? U.by_div : U.by_mul, rate: s.rate, end: s.end }),
+        })))
+        : h("p", { class: "note", text: U.no_trades }));
+      return;
+    }
+    el.log.replaceChildren(table([U.col_step, U.col_start, U.col_rate, U.col_op, U.col_end],
+      steps.map((s, i) => [String(i + 1), s.start, s.rate, s.op, s.end])));
+  }
+  if (narrow.addEventListener) narrow.addEventListener("change", () => { if (st) drawLog(); });
+
+  function drawBoard() {
+    drawQuotes();
+    drawButtons();
+    drawLog();
+    el.wallet({
+      hold: { now: amountText(st.amt, st.cur, st.when) },
+      res: { now: st.done ? signed(outcome().v) : U.not_yet },
+    });
+    const A = st.r.after;
+    el.after.disabled = st.busy || !st.bestPath || (A.kind === "react" ? st.reacted : !!st.afterShown);
+  }
+
+  function showRound() {
+    stop();
+    const r = ROUNDS[pos];
+    st = { r, q: {}, was: {}, answered: false, reacted: false, busy: false, bestPath: null, bestV: 0, afterShown: false };
+    for (const q of r.quotes) st.q[q.id] = Object.assign({}, q);
+
+    el.quotes = h("div", { class: "table-wrap" });
+    el.hint = h("p", { class: "note", text: U.answer_first });
+    el.buttons = h("div", { class: "choice", role: "group", "aria-label": r.name });
+    const again = h("button", { class: "btn secondary", type: "button", text: U.again });
+    again.addEventListener("click", () => { if (!st.busy) { restart(); drawBoard(); } });
+    el.result = h("p", { class: "result", hidden: true, "aria-live": "polite" });
+    el.log = h("div", { class: "table-wrap" });
+    const wallet = h("div");
+    // The round's number and name head the question card, which on a phone is the first card.
+    board.replaceChildren(el.quotes, wallet, el.hint, el.buttons, h("div", { class: "row" }, again), el.result,
+      subhead(U.log_title), el.log);
+    el.wallet = readouts(wallet, [{ id: "hold", label: U.you_hold }, { id: "res", label: U.your_result }]);
+
+    const qHost = h("div");
+    el.say = h("p", { class: "say", hidden: true });
+    el.extra = h("div");
+    el.years = r.after.kind === "outcomes" ? h("div") : null;
+    el.six = h("div");
+    el.after = h("button", { class: "btn", type: "button", text: r.after.button, disabled: true });
+    el.after.addEventListener("click", afterAction);
+    const actions = [el.after];
+    el.play = null;
+    if (r.after.kind === "outcomes") {
+      el.play = h("button", { class: "btn secondary", type: "button", text: r.after.play, hidden: !years.length });
+      el.play.addEventListener("click", () => { if (!st.busy) { restart(); runPath(r.after.path); } });
+      actions.push(el.play);
+    }
+    const back = h("button", { class: "btn secondary", type: "button", text: U.back, disabled: pos === 0 });
+    const next = h("button", { class: "btn secondary", type: "button", text: U.next });
+    const done = h("p", { class: "note", text: U.done, hidden: true });
+    back.addEventListener("click", () => { pos = Math.max(0, pos - 1); showRound(); });
+    next.addEventListener("click", () => {
+      if (pos < ROUNDS.length - 1) { pos += 1; showRound(); } else { done.hidden = false; }
+    });
+    // The tables come before the sentence that explains them, which speaks of "these six".
+    // replaceChildren would print a null as the word "null", so the missing years box is dropped.
+    side.replaceChildren(...[
+      h("div", { class: "event-top" }, h("span", { text: fill(U.round_of, { n: pos + 1, total: ROUNDS.length }) })),
+      h("h2", { text: r.name }), h("p", { class: "event-text", text: r.setting }), qHost,
+      h("div", { class: "row" }, ...actions), el.extra, el.years, el.six, el.say,
+      h("div", { class: "row" }, back, next), done].filter(Boolean));
+
+    restart();
+    question(qHost, r.predict, () => {
+      st.answered = true;
+      el.hint.hidden = true;
+      drawBoard();
+      Sim.showOnNarrow(board);
+    });
+    drawYears();
+    drawBoard();
+  }
+
+  selfCheck();
+  showRound();
+  drawBest();
+})();
+
+</script>
+
+</body></html>

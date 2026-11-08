@@ -1,0 +1,952 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>The Overshooting Dollar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap">
+<style>
+/* Shared look for the course simulations. build_sims.py puts this into every page.
+
+   Colors are tokens. The full light palette sits on :root, and the two dark blocks repeat only
+   the tokens, so a color never exists in one theme alone. The curve colors follow the course
+   figures, demand blue and supply orange, and were checked with the dataviz validator on
+   2026-09-25. Light #1e5a96 and #b45028 on white, dark #3d8ae0 and #dd7433 on #152131, all
+   checks pass, CVD separation included. The course figures' green for a new equilibrium was
+   dropped, since it could not be told from the supply orange under red-green color blindness.
+   The old point is gray and the new point is ink, so they differ by lightness and by label. */
+
+:root {
+  --ground: #f3f6fa;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+  --ink: #13233a;
+  --ink-2: #3f5068;
+  --muted: #66758a;
+  --rule: #d6dee8;
+  --grid: #e8edf3;
+  --accent: #1a3260;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3eaf5;
+  --focus: #2f6fdb;
+  --demand: #1e5a96;
+  --supply: #b45028;
+  --old: #8b98a9;
+  --good: #1f6b33;
+  --good-bg: #e6f2e8;
+  --bad: #a3261f;
+  --bad-bg: #fbe9e7;
+  /* Lexend, a face designed for reading ease. Atkinson Hyperlegible was tried first, but it
+     slashes its zeros, so 200 read as 2 then two crossed circles on every axis. */
+  --font: "Lexend", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --mono: "Lexend", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0d1520;
+    --surface: #152131;
+    --surface-2: #1b2a3d;
+    --ink: #e8eef6;
+    --ink-2: #b9c6d6;
+    --muted: #8d9cb0;
+    --rule: #2a3b51;
+    --grid: #1f2e41;
+    --accent: #9dbbe6;
+    --accent-ink: #0d1520;
+    --accent-soft: #1f3150;
+    --focus: #8ab4f8;
+    --demand: #3d8ae0;
+    --supply: #dd7433;
+    --old: #6f7f94;
+    --good: #7fcf8f;
+    --good-bg: #173322;
+    --bad: #f19a90;
+    --bad-bg: #3a1c1a;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0d1520;
+  --surface: #152131;
+  --surface-2: #1b2a3d;
+  --ink: #e8eef6;
+  --ink-2: #b9c6d6;
+  --muted: #8d9cb0;
+  --rule: #2a3b51;
+  --grid: #1f2e41;
+  --accent: #9dbbe6;
+  --accent-ink: #0d1520;
+  --accent-soft: #1f3150;
+  --focus: #8ab4f8;
+  --demand: #3d8ae0;
+  --supply: #dd7433;
+  --old: #6f7f94;
+  --good: #7fcf8f;
+  --good-bg: #173322;
+  --bad: #f19a90;
+  --bad-bg: #3a1c1a;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.5;
+}
+[hidden] { display: none !important; }
+
+.sim { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; }
+.sim-head { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+}
+.sim-head h1 {
+  margin: 0; font-size: clamp(26px, 4.2vw, 36px); line-height: 1.15; text-wrap: balance;
+  color: var(--ink);
+}
+.lede { margin: 0; max-width: 65ch; color: var(--ink-2); }
+.sim-foot { margin-top: 28px; font-size: 14px; color: var(--muted); max-width: 70ch; }
+
+/* tabs */
+.tabs {
+  display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-block: 6px 16px;
+  background: var(--surface-2); border-radius: 10px;
+}
+.tab {
+  font: inherit; font-weight: 700; border: 0; border-radius: 7px; cursor: pointer;
+  background: transparent; color: var(--ink-2); padding: 8px 16px; min-height: 42px;
+}
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+
+/* layout */
+.layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .layout.wide-first { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .layout.two-one { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  /* The graph stays in view while the questions beside it scroll, so the move is seen. */
+  .layout > .card.figure {
+    position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
+    max-height: calc(100vh - 24px); overflow-y: auto;
+  }
+}
+.result { margin: 10px 0 0; font-weight: 600; }
+.figure .choice { margin: 4px 0 10px; }
+.table-wrap { overflow-x: auto; margin-top: 10px; }
+.compare { width: 100%; border-collapse: collapse; font-size: 15px; }
+.compare th, .compare td { padding: 6px 10px; border-bottom: 1px solid var(--rule); text-align: left; }
+.compare thead th { color: var(--muted); font-weight: 600; font-size: 13px; }
+.compare td { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.stack { display: grid; gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 16px; }
+.card h2 { margin: 0 0 8px; font-size: 18px; color: var(--ink); }
+.figure svg { display: block; width: 100%; height: auto; }
+.fig-title { margin: 0 0 4px; font-size: 16px; font-weight: 700; color: var(--ink); }
+.fig-note { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+.pair { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 620px) { .pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.trio { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 720px) { .trio { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* text blocks */
+.event-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 14px; }
+.event-text { margin: 6px 0 14px; font-size: 19px; line-height: 1.45; }
+.say { margin: 10px 0 0; }
+.note { font-size: 14px; color: var(--muted); margin: 8px 0 0; }
+
+/* questions */
+.q { display: grid; gap: 10px; margin-top: 14px; }
+.q-prompt { margin: 0; font-weight: 700; }
+.options { display: grid; gap: 8px; }
+.opt {
+  font: inherit; text-align: left; display: flex; gap: 10px; align-items: flex-start;
+  background: var(--surface); color: var(--ink); cursor: pointer;
+  border: 1.5px solid var(--rule); border-radius: 10px; padding: 10px 14px; min-height: 48px;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:disabled { cursor: default; }
+.opt .letter { font-weight: 700; color: var(--muted); min-width: 1.4em; }
+.opt[data-state="right"] { border-color: var(--good); background: var(--good-bg); }
+.opt[data-state="wrong"] { border-color: var(--bad); background: var(--bad-bg); }
+.opt[data-state="right"] .letter { color: var(--good); }
+.opt[data-state="wrong"] .letter { color: var(--bad); }
+.feedback { border-radius: 10px; padding: 10px 14px; background: var(--surface-2); }
+.verdict { font-weight: 700; }
+.feedback.is-right .verdict { color: var(--good); }
+.feedback.is-wrong .verdict { color: var(--bad); }
+
+/* buttons and controls */
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+.btn {
+  font: inherit; font-weight: 700; cursor: pointer; min-height: 44px; padding: 9px 18px;
+  border-radius: 10px; border: 1.5px solid var(--accent); background: var(--accent); color: var(--accent-ink);
+}
+.btn.secondary { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.choice { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice .btn[aria-pressed="false"] { background: transparent; color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.slider { display: grid; gap: 2px; margin-top: 12px; }
+.slider label { font-weight: 700; }
+.slider .ends { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.slider output { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 15px; }
+input[type="range"] { width: 100%; min-height: 34px; accent-color: var(--accent); }
+
+/* readouts */
+.readouts { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-top: 14px; }
+.readout { background: var(--surface-2); border-radius: 10px; padding: 8px 12px; }
+.readout .r-label { display: block; font-size: 13px; color: var(--muted); }
+.readout .r-value { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 19px; color: var(--ink); }
+.readout .r-was { font-size: 13px; color: var(--muted); font-family: var(--mono); }
+
+/* the plots */
+.plot text { font-family: var(--font); fill: var(--ink-2); }
+.plot .tick { font-size: 15px; fill: var(--muted); }
+.plot .axis-line { stroke: var(--ink-2); stroke-width: 1.5; }
+.plot .gridline { stroke: var(--grid); stroke-width: 1; }
+.plot .axis-label { font-size: 15px; fill: var(--ink-2); }
+.plot .curve { fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.plot .curve.dashed { stroke-dasharray: 11 7; }
+.plot .c-demand { stroke: var(--demand); }
+.plot .c-supply { stroke: var(--supply); }
+.plot .c-ink { stroke: var(--ink); }
+.plot .c-old { stroke: var(--old); }
+.plot .lbl { font-size: 19px; font-weight: 700; }
+.plot .l-demand { fill: var(--demand); }
+.plot .l-supply { fill: var(--supply); }
+.plot .l-ink { fill: var(--ink); }
+.plot .l-old { fill: var(--muted); }
+.plot .pt-old { fill: var(--old); stroke: var(--surface); stroke-width: 2.5; }
+.plot .pt-new { fill: var(--ink); stroke: var(--surface); stroke-width: 2.5; }
+.plot .guide { stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 3 4; fill: none; }
+.plot .arrow { stroke: var(--muted); stroke-width: 2.4; fill: none; }
+.plot .arrowhead { fill: var(--muted); }
+.plot .axmark { font-size: 15px; font-weight: 700; fill: var(--ink); }
+.plot .axmark.old { fill: var(--muted); }
+/* A halo in the card's color behind every label, so a line that passes close stays behind it */
+.plot .lbl, .plot .axmark {
+  paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round;
+}
+.plot .band { fill: var(--accent-soft); }
+/* Two graphs side by side print at about 0.6 of their size, so their text is set larger. */
+.pair .plot .tick, .pair .plot .axis-label, .pair .plot .axmark { font-size: 20px; }
+.pair .plot .lbl { font-size: 24px; }
+.trio .plot .tick, .trio .plot .axis-label { font-size: 22px; }
+.trio .plot .lbl { font-size: 24px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+</style>
+<div class="sim">
+<header class="sim-head">
+<div class="eyebrow">ECON 331, Chapter 15</div>
+<h1>The Overshooting Dollar</h1>
+<p class="lede">The Fed raises the money supply by 10 percent. Prices are slow to move, so the interest rate moves first. Follow the dollar on the day of the news and in the long run.</p>
+</header>
+<main id="app"></main>
+<footer class="sim-foot">The numbers are the ones in the Chapter 15 deck. Nothing you do on this page is saved or sent anywhere.</footer>
+</div>
+<script>const SIM = {"model":{"L0":1400,"L1":100,"m0":1000,"i_eur":4,"e0":1.2,"up":0.1,"theta":0.45,"T":4,"T_end":16,"t_back":10,"i0":4.0,"i_day":3.0,"e_long":1.32,"e_day_perm":1.3333333333333333,"e_day_temp":1.2121212121212122},"cases":{"permanent":{"label":"A permanent rise","predict":{"prompt":"On the day of the news, what happens to the dollar?","options":[{"key":"app","text":"It appreciates"},{"key":"less","text":"It depreciates by less than 10 percent"},{"key":"same","text":"It depreciates by exactly 10 percent"},{"key":"more","text":"It depreciates by more than 10 percent"}],"answer":"more","why":"Two things push the dollar down on the day. The dollar interest rate falls from 4 to 3 percent, and everyone now expects the dollar to be 10 percent weaker in the long run. Today's rate jumps to 1.333, a depreciation of 11.1 percent, past its long-run level of 1.32. That is overshooting."},"after":{"prompt":"Prices now start to rise. Which way does the dollar move next?","options":[{"key":"dep","text":"It depreciates further"},{"key":"stay","text":"It stays where it is"},{"key":"app","text":"It appreciates"}],"answer":"app","why":"As prices rise, real money falls back toward 1,000, so the dollar interest rate climbs back to 4 percent. Dollar deposits pay more again, and the dollar appreciates from 1.333 to its long-run level of 1.32."},"steps":{"start":"Before the news. Real money is 1,000 billion, so the dollar interest rate is 4 percent, the same as the euro rate. No change is expected, and one euro costs 1.20 dollars.","day":"On the day. Prices have not moved yet, so real money rises to 1,100 and the dollar rate falls to 3 percent. In the long run prices, and so the exchange rate, will be 10 percent higher, so the expected rate rises to 1.32. Today's rate jumps to 1.333.","end":"The long run. Prices are 10 percent higher, real money is back at 1,000, the dollar rate is 4 percent again, and one euro costs 1.32 dollars, 10 percent more than at the start. On the way the rate went past 1.32 to 1.333, then came back."},"go_day":"Show the day of the news","go_end":"Let prices adjust"},"temporary":{"label":"A temporary rise","predict":{"prompt":"On the day of the news, what happens to the dollar?","options":[{"key":"app","text":"It appreciates"},{"key":"less","text":"It depreciates by less than 10 percent"},{"key":"same","text":"It depreciates by exactly 10 percent"},{"key":"more","text":"It depreciates by more than 10 percent"}],"answer":"less","why":"Only the interest rate moves. It falls from 4 to 3 percent, but the extra money will be taken back, so the expected rate stays at 1.20. Today's rate moves only to 1.212, a depreciation of about 1 percent."},"after":{"prompt":"Later the central bank takes the extra money back. What happens to the dollar?","options":[{"key":"dep","text":"It depreciates further"},{"key":"stay","text":"It stays at 1.212"},{"key":"back","text":"It returns to 1.20"}],"answer":"back","why":"Real money returns to 1,000 and the dollar rate to 4 percent. The expected rate never moved, so today's rate returns to 1.20."},"steps":{"start":"Before the news. Real money is 1,000 billion, so the dollar interest rate is 4 percent, the same as the euro rate. No change is expected, and one euro costs 1.20 dollars.","day":"On the day. Real money rises to 1,100 and the dollar rate falls to 3 percent. The rise will be taken back, so the expected rate stays at 1.20. Today's rate moves to 1.212.","end":"The money is taken back. Real money returns to 1,000, the dollar rate to 4 percent, and today's rate to 1.20. Prices never moved."},"go_day":"Show the day of the news","go_end":"Take the money back"}},"fx":{"presets":[{"label":"The book's example","i_usd":5,"i_eur":3,"e_exp":1.224,"e":1.2,"e_text":"1.200"},{"label":"Dollar rate rises to 7 percent","i_usd":7,"i_eur":3,"e_exp":1.224,"e":1.176923076923077,"e_text":"1.177"},{"label":"Euro rate falls to 1 percent","i_usd":5,"i_eur":1,"e_exp":1.224,"e":1.176923076923077,"e_text":"1.177"},{"label":"Expected rate falls to 1.20","i_usd":5,"i_eur":3,"e_exp":1.2,"e":1.1764705882352942,"e_text":"1.176"}],"i_usd":{"min":1,"max":9,"step":0.5},"i_eur":{"min":1,"max":9,"step":0.5},"e_exp":{"min":1.1,"max":1.4,"step":0.004}},"plots":{"money":{"xmin":750,"xmax":1250,"ymin":0,"ymax":10,"xticks":[800,1000,1200],"yticks":[0,2,4,6,8,10]},"fx":{"xmin":1.1,"xmax":1.45,"ymin":0,"ymax":10,"xticks":[1.1,1.2,1.3,1.4],"yticks":[0,2,4,6,8,10]},"fx_explore":{"xmin":1.0,"xmax":1.6,"ymin":0,"ymax":12,"xticks":[1.0,1.1,1.2,1.3,1.4,1.5,1.6],"yticks":[0,2,4,6,8,10,12]},"time_e":{"ymin":1.18,"ymax":1.36,"yticks":[1.2,1.25,1.3,1.35]},"time_i":{"ymin":2.5,"ymax":4.5,"yticks":[3,4]},"time_p":{"ymin":98,"ymax":112,"yticks":[100,105,110]}},"ui":{"right":"Right.","wrong":"Not quite. The right answer is marked.","tab_story":"The money shock","tab_fx":"The FX market","choose":"Choose the kind of rise","again":"Start again","answer_first":"Answer the question to see the markets move.","money_title":"Money market","fx_title":"FX market","time_title":"Over time","time_e":"Dollars per euro","time_i":"Dollar interest rate, percent","time_p":"Price level, start at 100","time_note":"The start, the jump and the long run are the deck's numbers. How fast prices adjust is only a sketch, since the book gives no speed.","news":"news","real_money":"Real money, billions","rate_axis":"Interest rate, percent","return_axis":"Return, percent","e_axis":"Dollars per euro","weaker":"A higher number of dollars per euro means a weaker dollar. Point 1 is the start, 2 the day of the news and 3 the long run.","weaker_short":"A higher number of dollars per euro means a weaker dollar.","weaker_temp":"A higher number of dollars per euro means a weaker dollar. Point 1 is the start and 2 the day of the news.","label_md":"L(i)Y","label_ms":"M/P","label_dr":"DR","label_fr":"FR","r_real":"Real money","r_rate":"Dollar interest rate","r_expected":"Expected rate","r_today":"Today's rate","r_price":"Price level","billions":"{v} billion","percent":"{v} percent","fx_intro":"Move the two interest rates and the rate people expect in a year. Uncovered interest parity sets today's rate so that a dollar deposit and a euro deposit are expected to pay the same.","fx_presets":"Try the cases from the book","s_usd":"Dollar interest rate","s_eur":"Euro interest rate","s_exp":"Expected rate in one year, dollars per euro","lower":"lower","higher":"higher","r_gain":"Expected change in the euro","r_dr":"Dollar deposit pays","r_fr":"Euro deposit pays, in dollars","per_year":"{v} percent a year"}};</script>
+<script>
+/* Shared behavior for the course simulations. build_sims.py puts this into every page, after
+   the SIM data and before the simulation's own script.
+
+     Sim.h, Sim.svg   build an HTML or an SVG element
+     Sim.Plot         one set of axes with a data scale, and helpers to draw on it
+     Sim.question     a multiple-choice question that marks itself and shows the reason
+     Sim.tabs         a row of tabs that shows one panel at a time
+     Sim.readouts     a row of labelled numbers
+     Sim.slider       a labelled range input
+     Sim.tween        a short animation that respects reduced motion
+     Sim.expect       compares a number the page computed with the one Python proved
+     Sim.fmt, Sim.fill  number formatting and {name} templates
+
+   Every word a student reads comes from SIM, which the builder has checked against the
+   writing rules. Nothing here writes a sentence of its own. */
+"use strict";
+
+const Sim = (() => {
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const LETTERS = "ABCDEFGH";
+
+  function setAttrs(e, attrs) {
+    if (!attrs) return e;
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v === undefined || v === null || v === false) continue;
+      e.setAttribute(k, v === true ? "" : String(v));
+    }
+    return e;
+  }
+
+  function svg(tag, attrs, parent) {
+    const e = setAttrs(document.createElementNS(SVGNS, tag), attrs);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  function h(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    if (attrs) {
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v === undefined || v === null || v === false) continue;
+        if (k === "class") e.className = v;
+        else if (k === "text") e.textContent = v;
+        else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2), v);
+        else e.setAttribute(k, v === true ? "" : String(v));
+      }
+    }
+    for (const kid of kids.flat(Infinity)) {
+      if (kid === null || kid === undefined || kid === false) continue;
+      const leaf = typeof kid === "string" || typeof kid === "number";
+      e.appendChild(leaf ? document.createTextNode(String(kid)) : kid);
+    }
+    return e;
+  }
+
+  function fmt(x, dp = 0) {
+    return Number(x).toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  }
+
+  function fill(template, vals) {
+    return String(template).replace(/\{(\w+)\}/g, (m, k) =>
+      Object.prototype.hasOwnProperty.call(vals, k) ? String(vals[k]) : m);
+  }
+
+  const reduced = () =>
+    !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  /* On a narrow screen the graph sits above the questions, out of sight once a student has
+     scrolled down to answer. Bring it back into view before it moves. The jump is instant,
+     since a smooth scroll was seen to start a second late and miss most of the animation. */
+  function showOnNarrow(el) {
+    const narrow = window.matchMedia && window.matchMedia("(max-width: 899px)").matches;
+    if (narrow && el && el.scrollIntoView) el.scrollIntoView({ behavior: "auto", block: "start" });
+  }
+
+  /* Runs onFrame(k) with k easing from 0 to 1. Returns a function that stops it.
+     A browser stops drawing frames in a hidden tab or a hidden frame, which once left a graph
+     frozen half way. A timer finishes the move if the frames have not, so the end state
+     always arrives. */
+  function tween(ms, onFrame, onDone) {
+    let stopped = false;
+    let finished = false;
+    const finish = () => {
+      if (finished || stopped) return;
+      finished = true;
+      onFrame(1);
+      if (onDone) onDone();
+    };
+    if (reduced() || ms <= 0) {
+      finish();
+      return () => {};
+    }
+    let start = null;
+    const step = (ts) => {
+      if (stopped || finished) return;
+      if (start === null) start = ts;
+      const k = Math.min(1, (ts - start) / ms);
+      if (k >= 1) { finish(); return; }
+      onFrame(k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    const timer = setTimeout(finish, ms + 400);
+    return () => { stopped = true; clearTimeout(timer); };
+  }
+
+  /* The page's own number against the one check_numbers() proved. A mismatch goes to the
+     console, where the browser test looks for it. */
+  function expect(label, got, want, tol = 1e-6) {
+    if (!(Math.abs(got - want) <= tol)) {
+      console.error("SIM CHECK FAILED", label, "page", got, "python", want);
+      return false;
+    }
+    return true;
+  }
+
+  let plotSeq = 0;
+
+  class Plot {
+    /* o: xmin, xmax, ymin, ymax, xticks, yticks, xfmt, yfmt, xlabel, ylabel, label,
+          width, height, m (margins l, r, t, b) */
+    constructor(host, o) {
+      this.o = Object.assign({ width: 480, height: 400, xfmt: (v) => fmt(v), yfmt: (v) => fmt(v) }, o);
+      this.o.m = Object.assign({ l: 56, r: 18, t: 34, b: 50 }, o.m || {});
+      const { width, height } = this.o;
+      this.id = "plot" + (++plotSeq);
+      this.root = svg("svg", {
+        viewBox: `0 0 ${width} ${height}`, class: "plot", role: "img", "aria-label": o.label || "",
+      }, host);
+      const defs = svg("defs", null, this.root);
+      const clip = svg("clipPath", { id: this.id + "c" }, defs);
+      svg("rect", { x: this.x0, y: this.y1, width: this.x1 - this.x0, height: this.y0 - this.y1 }, clip);
+      const mk = svg("marker", {
+        id: this.id + "a", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 6, markerHeight: 6,
+        orient: "auto-start-reverse",
+      }, defs);
+      svg("path", { d: "M0,0 L10,5 L0,10 z", class: "arrowhead" }, mk);
+      this.gGrid = svg("g", null, this.root);
+      this.gData = svg("g", { "clip-path": `url(#${this.id}c)` }, this.root);
+      this.gAxis = svg("g", null, this.root);
+      this.gTop = svg("g", null, this.root);
+      this.layers = new Map();
+      this.drawAxes();
+    }
+
+    get x0() { return this.o.m.l; }
+    get x1() { return this.o.width - this.o.m.r; }
+    get y0() { return this.o.height - this.o.m.b; }
+    get y1() { return this.o.m.t; }
+
+    x(v) { const o = this.o; return this.x0 + ((v - o.xmin) / (o.xmax - o.xmin)) * (this.x1 - this.x0); }
+    y(v) { const o = this.o; return this.y0 - ((v - o.ymin) / (o.ymax - o.ymin)) * (this.y0 - this.y1); }
+
+    drawAxes() {
+      const o = this.o;
+      for (const t of o.yticks || []) {
+        svg("line", { x1: this.x0, x2: this.x1, y1: this.y(t), y2: this.y(t), class: "gridline" }, this.gGrid);
+        svg("text", { x: this.x0 - 8, y: this.y(t) + 5, "text-anchor": "end", class: "tick" }, this.gAxis)
+          .textContent = o.yfmt(t);
+      }
+      for (const t of o.xticks || []) {
+        svg("line", { x1: this.x(t), x2: this.x(t), y1: this.y0, y2: this.y1, class: "gridline" }, this.gGrid);
+        svg("text", { x: this.x(t), y: this.y0 + 21, "text-anchor": "middle", class: "tick" }, this.gAxis)
+          .textContent = o.xfmt(t);
+      }
+      svg("line", { x1: this.x0, x2: this.x0, y1: this.y0, y2: this.y1 - 6, class: "axis-line" }, this.gAxis);
+      svg("line", { x1: this.x0, x2: this.x1 + 6, y1: this.y0, y2: this.y0, class: "axis-line" }, this.gAxis);
+      if (o.xlabel) {
+        svg("text", { x: this.x1, y: o.height - 6, "text-anchor": "end", class: "axis-label" }, this.gAxis)
+          .textContent = o.xlabel;
+      }
+      if (o.ylabel) {
+        svg("text", { x: 4, y: 18, "text-anchor": "start", class: "axis-label" }, this.gAxis)
+          .textContent = o.ylabel;
+      }
+    }
+
+    /* Named layers, cleared and redrawn as the state changes. "top" layers are not clipped. */
+    layer(name, top) {
+      if (!this.layers.has(name)) this.layers.set(name, svg("g", null, top ? this.gTop : this.gData));
+      return this.layers.get(name);
+    }
+    clear(name) { const g = this.layers.get(name); if (g) g.replaceChildren(); }
+    clearAll() { for (const g of this.layers.values()) g.replaceChildren(); }
+
+    path(g, pts, cls) {
+      const d = pts.map((p, i) => (i ? "L" : "M") + this.x(p[0]).toFixed(1) + " " + this.y(p[1]).toFixed(1)).join(" ");
+      return svg("path", { d, class: cls }, g);
+    }
+    segment(g, xa, ya, xb, yb, cls) { return this.path(g, [[xa, ya], [xb, yb]], cls); }
+    point(g, x, y, cls, r = 7) {
+      return svg("circle", { cx: this.x(x).toFixed(1), cy: this.y(y).toFixed(1), r, class: cls }, g);
+    }
+    /* A label at a data point, moved by dx and dy pixels, with an optional subscript. */
+    text(g, x, y, str, cls, opt = {}) {
+      const t = svg("text", {
+        x: (this.x(x) + (opt.dx || 0)).toFixed(1), y: (this.y(y) + (opt.dy || 0)).toFixed(1),
+        "text-anchor": opt.anchor || "start", class: cls,
+      }, g);
+      t.appendChild(document.createTextNode(str));
+      if (opt.sub) svg("tspan", { dy: 5, "font-size": "0.72em" }, t).textContent = opt.sub;
+      return t;
+    }
+    guides(g, x, y) {
+      this.segment(g, this.o.xmin, y, x, y, "guide");
+      this.segment(g, x, this.o.ymin, x, y, "guide");
+    }
+    arrow(g, xa, ya, xb, yb) {
+      return svg("path", {
+        d: `M${this.x(xa).toFixed(1)} ${this.y(ya).toFixed(1)} L${this.x(xb).toFixed(1)} ${this.y(yb).toFixed(1)}`,
+        class: "arrow", "marker-end": `url(#${this.id}a)`,
+      }, g);
+    }
+    /* Labels on the axes, drawn just inside the plot so they never sit on a tick number.
+       flip puts the label on the other side of its guide line, for two marks close together. */
+    ymark(g, y, str, sub, cls, flip) {
+      return this.text(g, this.o.xmin, y, str, "axmark " + (cls || ""), { dx: 6, dy: flip ? 17 : -6, sub });
+    }
+    xmark(g, x, str, sub, cls, flip) {
+      return this.text(g, x, this.o.ymin, str, "axmark " + (cls || ""),
+        { dx: flip ? -5 : 5, dy: -8, sub, anchor: flip ? "end" : "start" });
+    }
+  }
+
+  /* q: prompt, options [{key, text}], answer, why. onDone(right, key) runs once. */
+  function question(host, q, onDone) {
+    const box = h("div", { class: "q" });
+    const list = h("div", { class: "options", role: "group", "aria-label": q.prompt });
+    const fb = h("div", { class: "feedback", hidden: true, "aria-live": "polite" });
+    const buttons = q.options.map((o, i) => {
+      const b = h("button", { class: "opt", type: "button" },
+        h("span", { class: "letter", text: LETTERS[i] }), h("span", { text: o.text }));
+      b.addEventListener("click", () => choose(i));
+      list.appendChild(b);
+      return b;
+    });
+    let done = false;
+    function choose(i) {
+      if (done) return;
+      done = true;
+      const right = q.options[i].key === q.answer;
+      buttons.forEach((b, j) => {
+        b.disabled = true;
+        if (q.options[j].key === q.answer) b.dataset.state = "right";
+      });
+      if (!right) buttons[i].dataset.state = "wrong";
+      fb.className = "feedback " + (right ? "is-right" : "is-wrong");
+      fb.replaceChildren(h("span", { class: "verdict", text: right ? SIM.ui.right : SIM.ui.wrong }), " ",
+        h("span", { text: q.why }));
+      fb.hidden = false;
+      if (onDone) onDone(right, q.options[i].key);
+    }
+    box.append(h("p", { class: "q-prompt", text: q.prompt }), list, fb);
+    host.appendChild(box);
+    return { box, choose };
+  }
+
+  /* items: [{id, label, panel}]. Returns the tab bar. The caller places it. */
+  function tabs(items, initial, onShow) {
+    const bar = h("div", { class: "tabs", role: "tablist" });
+    const btns = items.map((it, i) => {
+      const b = h("button", {
+        class: "tab", type: "button", role: "tab", id: "tab-" + it.id, "aria-controls": "panel-" + it.id,
+      }, it.label);
+      b.addEventListener("click", () => show(i));
+      b.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        e.preventDefault();
+        const n = (i + (e.key === "ArrowRight" ? 1 : items.length - 1)) % items.length;
+        show(n);
+        btns[n].focus();
+      });
+      it.panel.id = "panel-" + it.id;
+      it.panel.setAttribute("role", "tabpanel");
+      it.panel.setAttribute("aria-labelledby", "tab-" + it.id);
+      bar.appendChild(b);
+      return b;
+    });
+    function show(i) {
+      items.forEach((it, j) => {
+        const on = i === j;
+        btns[j].setAttribute("aria-selected", on ? "true" : "false");
+        btns[j].tabIndex = on ? 0 : -1;
+        it.panel.hidden = !on;
+      });
+      if (onShow) onShow(items[i].id);
+    }
+    show(initial || 0);
+    bar.show = show;
+    return bar;
+  }
+
+  /* specs: [{id, label}]. Returns update({id: {now, was}}). */
+  function readouts(host, specs) {
+    const wrap = h("div", { class: "readouts" });
+    const cells = {};
+    for (const s of specs) {
+      const v = h("span", { class: "r-value", "data-readout": s.id });
+      const was = h("span", { class: "r-was" });
+      wrap.appendChild(h("div", { class: "readout" }, h("span", { class: "r-label", text: s.label }), v, " ", was));
+      cells[s.id] = { v, was };
+    }
+    host.appendChild(wrap);
+    return (vals) => {
+      for (const [k, val] of Object.entries(vals)) {
+        if (!cells[k]) continue;
+        cells[k].v.textContent = val.now;
+        cells[k].was.textContent = val.was || "";
+      }
+    };
+  }
+
+  /* spec: id, label, min, max, step, value, left, right. show(v) formats the value. */
+  function slider(host, spec, show, onInput) {
+    const input = h("input", { type: "range", id: spec.id, min: spec.min, max: spec.max, step: spec.step, value: spec.value });
+    const out = h("output", { for: spec.id });
+    host.appendChild(h("div", { class: "slider" },
+      h("label", { for: spec.id, text: spec.label }), input,
+      h("div", { class: "ends" }, h("span", { text: spec.left || "" }), out, h("span", { text: spec.right || "" }))));
+    const update = (fire) => {
+      out.textContent = show ? show(Number(input.value)) : input.value;
+      if (fire && onInput) onInput(Number(input.value));
+    };
+    input.addEventListener("input", () => update(true));
+    update(false);
+    return {
+      input,
+      get value() { return Number(input.value); },
+      set(v, fire = true) { input.value = String(v); update(fire); },
+    };
+  }
+
+  return { h, svg, fmt, fill, tween, expect, Plot, question, tabs, readouts, slider, reduced, showOnNarrow };
+})();
+
+</script>
+<script>
+/* ECON 331, Chapter 15. Overshooting, on the deck's numbers.
+   The model and every sentence come from SIM, which sim_ch15_overshooting.py builds and
+   checks against check_ch15_numbers.py. This file only draws and moves things. */
+(() => {
+  const { h, Plot, fmt, fill, tween, expect, question, tabs, readouts, slider } = Sim;
+  const D = SIM.model;
+  const U = SIM.ui;
+  const PL = SIM.plots;
+  const app = document.getElementById("app");
+
+  /* The same model as the Python. Rates in percent. */
+  const rateFor = (real) => (D.L0 - real) / D.L1;
+  const spot = (eExp, iUsd, iEur) => eExp / (1 + (iUsd - iEur) / 100);
+  const frAt = (e, eExp, iEur) => iEur + (eExp / e - 1) * 100;
+
+  function state(caseId, t) {
+    let real = D.m0;
+    let price = 1;
+    let eExp = D.e0;
+    if (t >= D.T) {
+      if (caseId === "permanent") {
+        price = 1 + D.up * (1 - Math.exp(-D.theta * (t - D.T)));
+        real = (D.m0 * (1 + D.up)) / price;
+        eExp = D.e0 * (1 + D.up);
+      } else if (t < D.t_back) {
+        real = D.m0 * (1 + D.up);
+      }
+    }
+    const i = rateFor(real);
+    return { real, price, i, eExp, e: spot(eExp, i, D.i_eur) };
+  }
+  /* The long run itself, exactly, where the path above only gets close. */
+  function longRun(caseId) {
+    const perm = caseId === "permanent";
+    const price = perm ? 1 + D.up : 1;
+    const eExp = perm ? D.e0 * (1 + D.up) : D.e0;
+    const i = rateFor(D.m0);
+    return { real: D.m0, price, i, eExp, e: spot(eExp, i, D.i_eur) };
+  }
+  const START = state("permanent", 0);
+  expect("starting rate", START.e, D.e0);
+  expect("starting interest rate", START.i, D.i0);
+  expect("permanent, the day", state("permanent", D.T).e, D.e_day_perm);
+  expect("temporary, the day", state("temporary", D.T).e, D.e_day_temp);
+  expect("permanent, the long run", longRun("permanent").e, D.e_long);
+
+  const near = (a, b) => Math.abs(a - b) < 1e-6;
+  const pct = (v, dp) => fill(U.percent, { v: fmt(v, dp) });
+  const pctShort = (v) => fmt(v, Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1) + "%";
+
+  /* ---------------------------------------------------------------- the story tab */
+  const story = h("section", { class: "stack" });
+  const top = h("div", { class: "layout two-one" });
+  const figCard = h("div", { class: "card figure" });
+  const ctl = h("div", { class: "card" });
+  const timeCard = h("div", { class: "card figure" }, h("p", { class: "fig-title", text: U.time_title }));
+  top.append(figCard, ctl);
+  story.append(top, timeCard);
+
+  const pair = h("div", { class: "pair" });
+  const moneyCell = h("div", null, h("p", { class: "fig-title", text: U.money_title }));
+  const fxCell = h("div", null, h("p", { class: "fig-title", text: U.fx_title }));
+  pair.append(moneyCell, fxCell);
+  // the note names the numbered points, and a temporary rise has no point 3
+  const pointsNote = h("p", { class: "fig-note", text: U.weaker });
+  figCard.append(pair, pointsNote);
+
+  const moneyPlot = new Plot(moneyCell, Object.assign({}, PL.money, {
+    xlabel: U.real_money, ylabel: U.rate_axis, label: U.money_title, width: 480, height: 420,
+  }));
+  const fxPlot = new Plot(fxCell, Object.assign({}, PL.fx, {
+    xlabel: U.e_axis, ylabel: U.return_axis, label: U.fx_title, width: 480, height: 420,
+    xfmt: (v) => fmt(v, 2),
+  }));
+
+  const trio = h("div", { class: "trio" });
+  const cells = [U.time_e, U.time_i, U.time_p].map((title) => {
+    const c = h("div", null, h("p", { class: "fig-note", text: title }));
+    trio.appendChild(c);
+    return c;
+  });
+  timeCard.append(trio, h("p", { class: "fig-note", text: U.time_note }));
+  const timeOpts = (y, yfmt, label) => Object.assign({
+    xmin: 0, xmax: D.T_end, xticks: [], width: 480, height: 300, m: { l: 72, r: 16, t: 16, b: 44 },
+    label, yfmt,
+  }, y);
+  const tE = new Plot(cells[0], timeOpts(PL.time_e, (v) => fmt(v, 2), U.time_e));
+  const tI = new Plot(cells[1], timeOpts(PL.time_i, (v) => fmt(v), U.time_i));
+  const tP = new Plot(cells[2], timeOpts(PL.time_p, (v) => fmt(v), U.time_p));
+  for (const p of [tE, tI, tP]) {
+    p.segment(p.layer("news"), D.T, p.o.ymin, D.T, p.o.ymax, "guide");
+    p.text(p.layer("newslabel", true), D.T, p.o.ymin, U.news, "tick", { anchor: "middle", dy: 26 });
+  }
+
+  function frPoints(eExp, x0, x1) {
+    const pts = [];
+    for (let k = 0; k <= 100; k += 1) {
+      const e = x0 + ((x1 - x0) * k) / 100;
+      pts.push([e, frAt(e, eExp, D.i_eur)]);
+    }
+    return pts;
+  }
+
+  /* stage: start, day, moving or end. It decides which numbered points are shown. */
+  function drawMarkets(stage, s) {
+    // money market
+    const mp = moneyPlot;
+    mp.clearAll();
+    const mc = mp.layer("curves");
+    const mg = mp.layer("guides");
+    const mpt = mp.layer("points", true);
+    const ml = mp.layer("labels", true);
+    mp.segment(mc, PL.money.xmin, rateFor(PL.money.xmin), PL.money.xmax, rateFor(PL.money.xmax), "curve c-demand");
+    // on the left of the line, clear of the two M/P lines at 1,000 and 1,100
+    mp.text(ml, 800, rateFor(800), U.label_md, "lbl l-demand", { dx: 4, dy: -14 });
+    const movedM = !near(s.real, START.real);
+    if (movedM) {
+      mp.segment(mc, START.real, 0, START.real, PL.money.ymax, "curve c-supply");
+      mp.guides(mg, START.real, START.i);
+      mp.point(mpt, START.real, START.i, "pt-old");
+      mp.ymark(ml, START.i, pctShort(START.i), "", "old");
+    }
+    mp.segment(mc, s.real, 0, s.real, PL.money.ymax, "curve c-supply" + (movedM ? " dashed" : ""));
+    mp.text(ml, s.real, 9.3, U.label_ms, "lbl l-supply", { dx: 8 });
+    mp.guides(mg, s.real, s.i);
+    mp.point(mpt, s.real, s.i, movedM ? "pt-new" : "pt-old");
+    if (!movedM || !near(s.i, START.i)) mp.ymark(ml, s.i, pctShort(s.i), "", movedM ? "" : "old");
+
+    // FX market, with the deck's numbered points
+    const fp = fxPlot;
+    fp.clearAll();
+    const fc = fp.layer("curves");
+    const fg = fp.layer("guides");
+    const fpt = fp.layer("points", true);
+    const fl = fp.layer("labels", true);
+    const movedR = !near(s.i, START.i);
+    const movedX = !near(s.eExp, START.eExp);
+    const day = state(caseId, D.T);
+    // DR2 is the dashed dollar return. While the rate is away from 4 it is today's rate. At the
+    // end it is the day's rate, left on the graph beside point 2, as the deck draws it.
+    const dr2 = movedR ? s.i : (stage === "end" && !near(day.i, START.i) ? day.i : null);
+    fp.segment(fc, PL.fx.xmin, START.i, PL.fx.xmax, START.i, "curve c-demand");
+    fp.path(fc, frPoints(START.eExp, PL.fx.xmin, PL.fx.xmax), "curve c-supply");
+    fp.text(fl, PL.fx.xmax, START.i, U.label_dr, "lbl l-demand", { dx: -4, dy: -8, anchor: "end", sub: dr2 !== null ? "1" : "" });
+    fp.text(fl, 1.15, frAt(1.15, START.eExp, D.i_eur), U.label_fr, "lbl l-supply", { dx: 10, sub: movedX ? "1" : "" });
+    if (dr2 !== null) {
+      fp.segment(fc, PL.fx.xmin, dr2, PL.fx.xmax, dr2, "curve c-demand dashed");
+      fp.text(fl, PL.fx.xmax, dr2, U.label_dr, "lbl l-demand", { dx: -4, dy: -8, anchor: "end", sub: "2" });
+    }
+    if (movedX) {
+      fp.path(fc, frPoints(s.eExp, PL.fx.xmin, PL.fx.xmax), "curve c-supply dashed");
+      fp.text(fl, 1.25, frAt(1.25, s.eExp, D.i_eur), U.label_fr, "lbl l-supply", { dx: 10, sub: "2" });
+    }
+    const one = { n: "1", e: START.e, i: START.i, dx: -10, dy: 24, anchor: "end" };
+    const marks = [one];
+    if (stage === "day") marks.push({ n: "2", e: s.e, i: s.i, dx: 10, dy: 24, now: true });
+    if (stage === "moving" || stage === "end") marks.push({ n: "2", e: day.e, i: day.i, dx: 10, dy: 24 });
+    if (stage === "end" && caseId === "permanent") marks.push({ n: "3", e: s.e, i: s.i, dx: -10, dy: -12, anchor: "end", now: true });
+    fp.guides(fg, s.e, s.i);
+    for (const mk of marks) {
+      fp.point(fpt, mk.e, mk.i, mk.now ? "pt-new" : "pt-old");
+      fp.text(fl, mk.e, mk.i, mk.n, "lbl " + (mk.now ? "l-ink" : "l-old"), { dx: mk.dx, dy: mk.dy, anchor: mk.anchor || "start" });
+    }
+    if (stage !== "start") fp.point(fpt, s.e, s.i, "pt-new");
+    fp.xmark(fl, s.e, fmt(s.e, 3), "", stage === "start" ? "old" : "");
+  }
+
+  /* The three paths over time, drawn up to tNow. finalState replaces the last point. */
+  function drawTime(tNow, finalState) {
+    const end = Math.min(tNow, D.T_end);
+    const times = [];
+    for (let t = 0; t < end; t += 0.1) times.push(t);
+    times.push(end);
+    for (const edge of [D.T, caseId === "temporary" ? D.t_back : null]) {
+      if (edge !== null && edge <= end) times.push(edge - 1e-6, edge);
+    }
+    times.sort((a, b) => a - b);
+    const series = [[tE, (s) => s.e], [tI, (s) => s.i], [tP, (s) => s.price * 100]];
+    for (const [p, get] of series) {
+      p.clear("path");
+      p.clear("lr");
+      const pts = times.map((t, k) => [t, get(finalState && k === times.length - 1 ? finalState : state(caseId, t))]);
+      p.path(p.layer("path"), pts, "curve c-ink");
+    }
+    if (caseId === "permanent") tE.segment(tE.layer("lr"), 0, D.e_long, D.T_end, D.e_long, "guide");
+  }
+
+  // controls
+  let caseId = "permanent";
+  let stop = () => {};
+  const choice = h("div", { class: "choice", role: "group", "aria-label": U.choose });
+  const caseBtns = {};
+  for (const id of ["permanent", "temporary"]) {
+    const b = h("button", { class: "btn", type: "button", "aria-pressed": id === caseId ? "true" : "false", text: SIM.cases[id].label });
+    b.addEventListener("click", () => {
+      caseId = id;
+      for (const [k, bb] of Object.entries(caseBtns)) bb.setAttribute("aria-pressed", k === id ? "true" : "false");
+      begin();
+    });
+    caseBtns[id] = b;
+    choice.appendChild(b);
+  }
+  const stepText = h("p", { class: "say" });
+  const qHost = h("div");
+  const hint = h("p", { class: "note", text: U.answer_first });
+  const again = h("button", { class: "btn secondary", type: "button", text: U.again });
+  again.addEventListener("click", () => begin());
+  const readHost = h("div");
+  ctl.append(h("p", { class: "q-prompt", text: U.choose }), choice, stepText, qHost, hint,
+    h("div", { class: "row" }, again), readHost);
+  const show = readouts(readHost, [
+    { id: "real", label: U.r_real }, { id: "rate", label: U.r_rate }, { id: "expected", label: U.r_expected },
+    { id: "today", label: U.r_today }, { id: "price", label: U.r_price },
+  ]);
+
+  function paint(stage, s, tNow, finalState) {
+    drawMarkets(stage, s);
+    drawTime(tNow, finalState);
+    show({
+      real: { now: fill(U.billions, { v: fmt(s.real) }) },
+      rate: { now: pct(s.i, 1) },
+      expected: { now: fmt(s.eExp, 2) },
+      today: { now: fmt(s.e, 3) },
+      price: { now: fmt(s.price * 100, 1) },
+    });
+  }
+
+  function begin() {
+    stop();
+    const C = SIM.cases[caseId];
+    pointsNote.textContent = caseId === "permanent" ? U.weaker : U.weaker_temp;
+    stepText.textContent = C.steps.start;
+    hint.hidden = false;
+    qHost.replaceChildren();
+    paint("start", START, D.T - 0.001);
+    question(qHost, C.predict, () => {
+      hint.hidden = true;
+      const day = state(caseId, D.T);
+      expect(caseId + " day", day.e, caseId === "permanent" ? D.e_day_perm : D.e_day_temp);
+      const mix = (k) => ({
+        real: START.real + (day.real - START.real) * k,
+        price: 1,
+        i: START.i + (day.i - START.i) * k,
+        eExp: START.eExp + (day.eExp - START.eExp) * k,
+        e: START.e + (day.e - START.e) * k,
+      });
+      Sim.showOnNarrow(figCard);
+      stop = tween(900, (k) => paint(k < 1 ? "start" : "day", k < 1 ? mix(k) : day, k < 1 ? D.T - 0.001 : D.T), () => {
+        stepText.textContent = C.steps.day;
+        question(qHost, C.after, () => {
+          const end = longRun(caseId);
+          Sim.showOnNarrow(figCard);
+          stop = tween(2600, (k) => {
+            const t = D.T + (D.T_end - D.T) * k;
+            if (k < 1) paint("moving", state(caseId, t), t);
+            else paint("end", end, D.T_end, end);
+          }, () => {
+            expect(caseId + " long run", end.e, caseId === "permanent" ? D.e_long : D.e0);
+            stepText.textContent = C.steps.end;
+          });
+        });
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------- the FX tab */
+  const fxTab = h("section", { class: "layout" });
+  const fxFig = h("div", { class: "card figure" }, h("p", { class: "fig-title", text: U.fx_title }));
+  const fxCtl = h("div", { class: "card" }, h("p", { class: "lede", text: U.fx_intro }));
+  fxTab.append(fxFig, fxCtl);
+  const fxHost = h("div");
+  fxFig.append(fxHost, h("p", { class: "fig-note", text: U.weaker_short }));
+  const X = PL.fx_explore;
+  const fx2 = new Plot(fxHost, Object.assign({}, X, {
+    xlabel: U.e_axis, ylabel: U.return_axis, label: U.fx_title, width: 480, height: 420,
+    xfmt: (v) => fmt(v, 1),
+  }));
+  const FXD = SIM.fx;
+  const sUsd = slider(fxCtl, {
+    id: "fx-usd", label: U.s_usd, min: FXD.i_usd.min, max: FXD.i_usd.max, step: FXD.i_usd.step,
+    value: FXD.presets[0].i_usd, left: U.lower, right: U.higher,
+  }, (v) => pct(v, 1), drawFx);
+  const sEur = slider(fxCtl, {
+    id: "fx-eur", label: U.s_eur, min: FXD.i_eur.min, max: FXD.i_eur.max, step: FXD.i_eur.step,
+    value: FXD.presets[0].i_eur, left: U.lower, right: U.higher,
+  }, (v) => pct(v, 1), drawFx);
+  const sExp = slider(fxCtl, {
+    id: "fx-exp", label: U.s_exp, min: FXD.e_exp.min, max: FXD.e_exp.max, step: FXD.e_exp.step,
+    value: FXD.presets[0].e_exp, left: U.lower, right: U.higher,
+  }, (v) => fmt(v, 3), drawFx);
+  const presetRow = h("div", { class: "choice" });
+  fxCtl.append(h("p", { class: "q-prompt", text: U.fx_presets }), presetRow);
+  for (const pr of FXD.presets) {
+    const b = h("button", { class: "btn secondary", type: "button", text: pr.label });
+    b.addEventListener("click", () => {
+      sUsd.set(pr.i_usd, false);
+      sEur.set(pr.i_eur, false);
+      sExp.set(pr.e_exp, false);
+      const e = drawFx();
+      expect("preset " + pr.label, Math.round(e * 1000) / 1000, Number(pr.e_text));
+    });
+    presetRow.appendChild(b);
+  }
+  const fxShow = readouts(fxCtl, [
+    { id: "today", label: U.r_today }, { id: "gain", label: U.r_gain },
+    { id: "dr", label: U.r_dr }, { id: "fr", label: U.r_fr },
+  ]);
+
+  function drawFx() {
+    const iUsd = sUsd.value;
+    const iEur = sEur.value;
+    const eExp = sExp.value;
+    const e = spot(eExp, iUsd, iEur);
+    const p = fx2;
+    p.clearAll();
+    const c = p.layer("curves");
+    const g = p.layer("guides");
+    const pt = p.layer("points", true);
+    const l = p.layer("labels", true);
+    p.segment(c, X.xmin, iUsd, X.xmax, iUsd, "curve c-demand");
+    const pts = [];
+    for (let k = 0; k <= 120; k += 1) {
+      const x = X.xmin + ((X.xmax - X.xmin) * k) / 120;
+      pts.push([x, frAt(x, eExp, iEur)]);
+    }
+    p.path(c, pts, "curve c-supply");
+    p.text(l, X.xmax, iUsd, U.label_dr, "lbl l-demand", { dx: -4, dy: -8, anchor: "end" });
+    // the FR label sits where the curve crosses 10.5 percent, kept inside the plot
+    const xl = Math.min(X.xmax - 0.12, Math.max(X.xmin + 0.02, eExp / (1 + (10.5 - iEur) / 100)));
+    p.text(l, xl, Math.min(frAt(xl, eExp, iEur), X.ymax - 0.8), U.label_fr, "lbl l-supply", { dx: 10 });
+    p.guides(g, e, iUsd);
+    p.point(pt, e, iUsd, "pt-new");
+    p.xmark(l, e, fmt(e, 3), "");
+    const gain = (eExp / e - 1) * 100;
+    fxShow({
+      today: { now: fmt(e, 3) },
+      gain: { now: fill(U.per_year, { v: fmt(gain, 2) }) },
+      dr: { now: pct(iUsd, 1) },
+      fr: { now: pct(iEur + gain, 1) },
+    });
+    return e;
+  }
+
+  /* ---------------------------------------------------------------- put it together */
+  const bar = tabs([
+    { id: "story", label: U.tab_story, panel: story },
+    { id: "fx", label: U.tab_fx, panel: fxTab },
+  ], 0);
+  app.append(bar, story, fxTab);
+  begin();
+  drawFx();
+})();
+
+</script>
+
+</body></html>

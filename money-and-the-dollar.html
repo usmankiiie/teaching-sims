@@ -1,0 +1,1017 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Money and the Dollar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;600;700&display=swap">
+<style>
+/* Shared look for the course simulations. build_sims.py puts this into every page.
+
+   Colors are tokens. The full light palette sits on :root, and the two dark blocks repeat only
+   the tokens, so a color never exists in one theme alone. The curve colors follow the course
+   figures, demand blue and supply orange, and were checked with the dataviz validator on
+   2026-09-25. Light #1e5a96 and #b45028 on white, dark #3d8ae0 and #dd7433 on #152131, all
+   checks pass, CVD separation included. The course figures' green for a new equilibrium was
+   dropped, since it could not be told from the supply orange under red-green color blindness.
+   The old point is gray and the new point is ink, so they differ by lightness and by label. */
+
+:root {
+  --ground: #f3f6fa;
+  --surface: #ffffff;
+  --surface-2: #eef2f7;
+  --ink: #13233a;
+  --ink-2: #3f5068;
+  --muted: #66758a;
+  --rule: #d6dee8;
+  --grid: #e8edf3;
+  --accent: #1a3260;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3eaf5;
+  --focus: #2f6fdb;
+  --demand: #1e5a96;
+  --supply: #b45028;
+  --old: #8b98a9;
+  --good: #1f6b33;
+  --good-bg: #e6f2e8;
+  --bad: #a3261f;
+  --bad-bg: #fbe9e7;
+  /* Lexend, a face designed for reading ease. Atkinson Hyperlegible was tried first, but it
+     slashes its zeros, so 200 read as 2 then two crossed circles on every axis. */
+  --font: "Lexend", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  --mono: "Lexend", "Segoe UI", system-ui, -apple-system, Roboto, Arial, sans-serif;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ground: #0d1520;
+    --surface: #152131;
+    --surface-2: #1b2a3d;
+    --ink: #e8eef6;
+    --ink-2: #b9c6d6;
+    --muted: #8d9cb0;
+    --rule: #2a3b51;
+    --grid: #1f2e41;
+    --accent: #9dbbe6;
+    --accent-ink: #0d1520;
+    --accent-soft: #1f3150;
+    --focus: #8ab4f8;
+    --demand: #3d8ae0;
+    --supply: #dd7433;
+    --old: #6f7f94;
+    --good: #7fcf8f;
+    --good-bg: #173322;
+    --bad: #f19a90;
+    --bad-bg: #3a1c1a;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --ground: #0d1520;
+  --surface: #152131;
+  --surface-2: #1b2a3d;
+  --ink: #e8eef6;
+  --ink-2: #b9c6d6;
+  --muted: #8d9cb0;
+  --rule: #2a3b51;
+  --grid: #1f2e41;
+  --accent: #9dbbe6;
+  --accent-ink: #0d1520;
+  --accent-soft: #1f3150;
+  --focus: #8ab4f8;
+  --demand: #3d8ae0;
+  --supply: #dd7433;
+  --old: #6f7f94;
+  --good: #7fcf8f;
+  --good-bg: #173322;
+  --bad: #f19a90;
+  --bad-bg: #3a1c1a;
+  color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.5;
+}
+[hidden] { display: none !important; }
+
+.sim { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 40px; }
+.sim-head { display: grid; gap: 6px; margin-bottom: 14px; }
+.eyebrow {
+  font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted);
+}
+.sim-head h1 {
+  margin: 0; font-size: clamp(26px, 4.2vw, 36px); line-height: 1.15; text-wrap: balance;
+  color: var(--ink);
+}
+.lede { margin: 0; max-width: 65ch; color: var(--ink-2); }
+.sim-foot { margin-top: 28px; font-size: 14px; color: var(--muted); max-width: 70ch; }
+
+/* tabs */
+.tabs {
+  display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; margin-block: 6px 16px;
+  background: var(--surface-2); border-radius: 10px;
+}
+.tab {
+  font: inherit; font-weight: 700; border: 0; border-radius: 7px; cursor: pointer;
+  background: transparent; color: var(--ink-2); padding: 8px 16px; min-height: 42px;
+}
+.tab[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.12); }
+
+/* layout */
+.layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 900px) {
+  .layout { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+  .layout.wide-first { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .layout.two-one { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  /* The graph stays in view while the questions beside it scroll, so the move is seen. */
+  .layout > .card.figure {
+    position: sticky; top: calc(env(safe-area-inset-top, 0px) + 12px);
+    max-height: calc(100vh - 24px); overflow-y: auto;
+  }
+}
+.result { margin: 10px 0 0; font-weight: 600; }
+.figure .choice { margin: 4px 0 10px; }
+.table-wrap { overflow-x: auto; margin-top: 10px; }
+.compare { width: 100%; border-collapse: collapse; font-size: 15px; }
+.compare th, .compare td { padding: 6px 10px; border-bottom: 1px solid var(--rule); text-align: left; }
+.compare thead th { color: var(--muted); font-weight: 600; font-size: 13px; }
+.compare td { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.stack { display: grid; gap: 16px; }
+.card { background: var(--surface); border: 1px solid var(--rule); border-radius: 12px; padding: 16px; }
+.card h2 { margin: 0 0 8px; font-size: 18px; color: var(--ink); }
+.figure svg { display: block; width: 100%; height: auto; }
+.fig-title { margin: 0 0 4px; font-size: 16px; font-weight: 700; color: var(--ink); }
+.fig-note { margin: 6px 0 0; font-size: 14px; color: var(--muted); }
+.pair { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 620px) { .pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.trio { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 720px) { .trio { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+/* text blocks */
+.event-top { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; color: var(--muted); font-size: 14px; }
+.event-text { margin: 6px 0 14px; font-size: 19px; line-height: 1.45; }
+.say { margin: 10px 0 0; }
+.note { font-size: 14px; color: var(--muted); margin: 8px 0 0; }
+
+/* questions */
+.q { display: grid; gap: 10px; margin-top: 14px; }
+.q-prompt { margin: 0; font-weight: 700; }
+.options { display: grid; gap: 8px; }
+.opt {
+  font: inherit; text-align: left; display: flex; gap: 10px; align-items: flex-start;
+  background: var(--surface); color: var(--ink); cursor: pointer;
+  border: 1.5px solid var(--rule); border-radius: 10px; padding: 10px 14px; min-height: 48px;
+}
+.opt:hover:not(:disabled) { border-color: var(--accent); }
+.opt:disabled { cursor: default; }
+.opt .letter { font-weight: 700; color: var(--muted); min-width: 1.4em; }
+.opt[data-state="right"] { border-color: var(--good); background: var(--good-bg); }
+.opt[data-state="wrong"] { border-color: var(--bad); background: var(--bad-bg); }
+.opt[data-state="right"] .letter { color: var(--good); }
+.opt[data-state="wrong"] .letter { color: var(--bad); }
+.feedback { border-radius: 10px; padding: 10px 14px; background: var(--surface-2); }
+.verdict { font-weight: 700; }
+.feedback.is-right .verdict { color: var(--good); }
+.feedback.is-wrong .verdict { color: var(--bad); }
+
+/* buttons and controls */
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; }
+.btn {
+  font: inherit; font-weight: 700; cursor: pointer; min-height: 44px; padding: 9px 18px;
+  border-radius: 10px; border: 1.5px solid var(--accent); background: var(--accent); color: var(--accent-ink);
+}
+.btn.secondary { background: transparent; color: var(--accent); }
+.btn:disabled { opacity: 0.45; cursor: default; }
+.choice { display: flex; flex-wrap: wrap; gap: 8px; }
+.choice .btn[aria-pressed="false"] { background: transparent; color: var(--accent); }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.slider { display: grid; gap: 2px; margin-top: 12px; }
+.slider label { font-weight: 700; }
+.slider .ends { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.slider output { font-family: var(--mono); font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 15px; }
+input[type="range"] { width: 100%; min-height: 34px; accent-color: var(--accent); }
+
+/* readouts */
+.readouts { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); margin-top: 14px; }
+.readout { background: var(--surface-2); border-radius: 10px; padding: 8px 12px; }
+.readout .r-label { display: block; font-size: 13px; color: var(--muted); }
+.readout .r-value { font-family: var(--mono); font-variant-numeric: tabular-nums; font-size: 19px; color: var(--ink); }
+.readout .r-was { font-size: 13px; color: var(--muted); font-family: var(--mono); }
+
+/* the plots */
+.plot text { font-family: var(--font); fill: var(--ink-2); }
+.plot .tick { font-size: 15px; fill: var(--muted); }
+.plot .axis-line { stroke: var(--ink-2); stroke-width: 1.5; }
+.plot .gridline { stroke: var(--grid); stroke-width: 1; }
+.plot .axis-label { font-size: 15px; fill: var(--ink-2); }
+.plot .curve { fill: none; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.plot .curve.dashed { stroke-dasharray: 11 7; }
+.plot .c-demand { stroke: var(--demand); }
+.plot .c-supply { stroke: var(--supply); }
+.plot .c-ink { stroke: var(--ink); }
+.plot .c-old { stroke: var(--old); }
+.plot .lbl { font-size: 19px; font-weight: 700; }
+.plot .l-demand { fill: var(--demand); }
+.plot .l-supply { fill: var(--supply); }
+.plot .l-ink { fill: var(--ink); }
+.plot .l-old { fill: var(--muted); }
+.plot .pt-old { fill: var(--old); stroke: var(--surface); stroke-width: 2.5; }
+.plot .pt-new { fill: var(--ink); stroke: var(--surface); stroke-width: 2.5; }
+.plot .guide { stroke: var(--muted); stroke-width: 1.3; stroke-dasharray: 3 4; fill: none; }
+.plot .arrow { stroke: var(--muted); stroke-width: 2.4; fill: none; }
+.plot .arrowhead { fill: var(--muted); }
+.plot .axmark { font-size: 15px; font-weight: 700; fill: var(--ink); }
+.plot .axmark.old { fill: var(--muted); }
+/* A halo in the card's color behind every label, so a line that passes close stays behind it */
+.plot .lbl, .plot .axmark {
+  paint-order: stroke; stroke: var(--surface); stroke-width: 5px; stroke-linejoin: round;
+}
+.plot .band { fill: var(--accent-soft); }
+/* Two graphs side by side print at about 0.6 of their size, so their text is set larger. */
+.pair .plot .tick, .pair .plot .axis-label, .pair .plot .axmark { font-size: 20px; }
+.pair .plot .lbl { font-size: 24px; }
+.trio .plot .tick, .trio .plot .axis-label { font-size: 22px; }
+.trio .plot .lbl { font-size: 24px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+
+</style>
+<div class="sim">
+<header class="sim-head">
+<div class="eyebrow">ECON 331, Chapter 14</div>
+<h1>Money and the Dollar</h1>
+<p class="lede">A central bank makes a decision about money. Predict what happens to prices and to the exchange rate, then watch ten years play out in the monetary approach.</p>
+</header>
+<main id="app"></main>
+<footer class="sim-foot">The cases follow the Chapter 14 deck. The starting rate of 1.20 dollars per euro is made up, and the dirham peg of 3.6725 dirhams per dollar is real. Nothing you do on this page is saved or sent anywhere.</footer>
+</div>
+<script>const SIM = {"model":{"T":5,"T_end":10,"b":5.0,"r":2.0,"e0":1.2},"cards":[{"id":"case1","name":"A one-time rise in money","model":"simple","peg":false,"numer":"home","e0":1.2,"rate_title":"Dollars per euro","home":{"label":"US","adj":"US","mu0":0.0,"mu1":0.0,"g0":0.0,"g1":0.0,"jump":10.0},"other":{"label":"Europe","adj":"European","mu0":0.0,"mu1":0.0,"g0":0.0,"g1":0.0,"jump":0.0},"event":"In year 5 the Fed raises the US money supply by 10 percent, once.","facts":["Before and after that, US money and output do not grow.","Nothing changes in Europe."],"q1":{"prompt":"What happens to the exchange rate, in dollars per euro?","options":[{"key":"jump","text":"It jumps up once, then stays at the new level"},{"key":"yearly","text":"It rises a little every year from year 5 on"},{"key":"back","text":"It jumps up, then falls back to where it was"},{"key":"none","text":"It does not change"}],"answer":"jump","why":"In the long run prices move one for one with money, so US prices rise 10 percent, once. By PPP the exchange rate rises with US prices. With no growth after year 5, it then stays."},"q2":{"prompt":"By how much does the exchange rate change?","options":[{"key":"up10","text":"Up 10 percent"},{"key":"up5","text":"Up 5 percent"},{"key":"up20","text":"Up 20 percent"},{"key":"down10","text":"Down 10 percent"}],"answer":"up10","why":"Money rises 10 percent, so US prices rise 10 percent, and so does the exchange rate, from 1.20 to 1.32 dollars per euro. The dollar depreciates 10 percent, once."},"result":"US money and US prices rise 10 percent in year 5. The exchange rate jumps from 1.20 to 1.32 dollars per euro and then stays there.","nums":{"e_start":1.2,"e_before":1.2,"e_day":1.3199999999999998,"e_end":1.3199999999999998,"dep_before":0.0,"dep_after":0.0,"i_before":2.0,"i_after":2.0,"pi_h_before":0.0,"pi_h_after":0.0,"pi_o_before":0.0,"pi_o_after":0.0}},{"id":"case2","model":"simple","peg":false,"numer":"home","e0":1.2,"rate_title":"Dollars per euro","home":{"label":"US","adj":"US","mu0":2.0,"mu1":5.0,"g0":0.0,"g1":0.0,"jump":0.0},"other":{"label":"Europe","adj":"European","mu0":0.0,"mu1":0.0,"g0":0.0,"g1":0.0,"jump":0.0},"name":"Faster money growth","event":"In year 5 the Fed raises US money growth from 2 to 5 percent a year, and keeps it there.","facts":["US output does not grow.","Nothing changes in Europe."],"q1":{"prompt":"What happens to the exchange rate from year 5 on?","options":[{"key":"faster","text":"It rises faster than before, with no jump"},{"key":"jump","text":"It jumps up at once, then rises as fast as before"},{"key":"same","text":"It keeps rising at the same speed as before"},{"key":"stop","text":"It stops rising"}],"answer":"faster","why":"With output fixed, US prices grow as fast as US money. By PPP the exchange rate grows as fast as US prices. In the simple model money demand does not depend on the interest rate, so nothing jumps. The path only bends."},"q2":{"prompt":"After year 5, by how many percent a year does the exchange rate rise?","options":[{"key":"five","text":"5 percent"},{"key":"three","text":"3 percent"},{"key":"two","text":"2 percent"},{"key":"seven","text":"7 percent"}],"answer":"five","why":"Prices and the exchange rate grow with money, 5 percent a year, up from 2 percent. That is 3 points faster. The dollar now depreciates 5 percent a year."},"result":"Money, US prices and the exchange rate all bend upward in year 5. They grew 2 percent a year and now grow 5 percent a year. Nothing jumps.","nums":{"e_start":1.2,"e_before":1.3262051016642527,"e_day":1.3262051016907768,"e_end":1.702881058311908,"dep_before":1.9999999999999944,"dep_after":4.999999999999997,"i_before":4.0,"i_after":7.0,"pi_h_before":2.0,"pi_h_after":5.0,"pi_o_before":0.0,"pi_o_after":0.0}},{"id":"ecb","name":"The ECB speeds up","model":"simple","peg":false,"numer":"home","e0":1.2,"rate_title":"Dollars per euro","home":{"label":"US","adj":"US","mu0":3.0,"mu1":3.0,"g0":1.0,"g1":1.0,"jump":0.0},"other":{"label":"Europe","adj":"European","mu0":3.0,"mu1":7.0,"g0":1.0,"g1":1.0,"jump":0.0},"event":"In year 5 the ECB raises euro money growth from 3 to 7 percent a year. The Fed changes nothing.","facts":["Before year 5, money grows 3 percent a year in the US and in Europe.","Output grows 1 percent a year in both.","So until year 5 the exchange rate stays at 1.20 dollars per euro."],"q1":{"prompt":"What happens to the exchange rate, in dollars per euro, from year 5 on?","options":[{"key":"fall","text":"It falls a little every year"},{"key":"rise","text":"It rises a little every year"},{"key":"jump","text":"It jumps down once, then stays"},{"key":"none","text":"It does not change, because the Fed did nothing"}],"answer":"fall","why":"Faster euro money growth means faster inflation in Europe. By relative PPP, the currency with the higher inflation loses value. Here that is the euro, so each euro buys fewer dollars every year, and the dollar gains."},"q2":{"prompt":"By how many percent a year does the exchange rate fall?","options":[{"key":"four","text":"4 percent"},{"key":"seven","text":"7 percent"},{"key":"six","text":"6 percent"},{"key":"two","text":"2 percent"}],"answer":"four","why":"Use the deck's equation. The rate of depreciation is the money growth gap minus the output growth gap. The money growth gap is 3 minus 7, or minus 4. The output growth gap is 1 minus 1, or zero. So the exchange rate falls 4 percent a year, and the dollar gains 4 percent a year."},"result":"European prices now rise 6 percent a year and US prices 2 percent a year. The exchange rate falls 4 percent a year from 1.20.","nums":{"e_start":1.2,"e_before":1.2,"e_day":1.2,"e_end":0.982476903693578,"dep_before":0.0,"dep_after":-4.000000000000004,"i_before":4.0,"i_after":4.0,"pi_h_before":2.0,"pi_h_after":2.0,"pi_o_before":2.0,"pi_o_after":6.0}},{"id":"case2_general","model":"general","peg":false,"numer":"home","e0":1.2,"rate_title":"Dollars per euro","home":{"label":"US","adj":"US","mu0":2.0,"mu1":5.0,"g0":0.0,"g1":0.0,"jump":0.0},"other":{"label":"Europe","adj":"European","mu0":0.0,"mu1":0.0,"g0":0.0,"g1":0.0,"jump":0.0},"name":"Faster money growth, with interest rates","event":"The decision of card 2. In year 5 the Fed announces that money will grow 5 percent a year, not 2, and everyone believes it.","facts":["Use the general model. People hold less money when the interest rate is higher.","The real interest rate is 2 percent.","US output does not grow, and nothing changes in Europe."],"q1":{"prompt":"What happens to the exchange rate in year 5, when the news comes out?","options":[{"key":"jump_up","text":"It jumps up at once, then rises faster than before"},{"key":"bend","text":"It does not jump. It only starts to rise faster"},{"key":"jump_down","text":"It jumps down at once, because the US interest rate is higher"},{"key":"wait","text":"Nothing happens until the extra money is printed"}],"answer":"jump_up","why":"People now expect 5 percent inflation, so by the Fisher effect the interest rate rises at once. Holding money costs more, so people want to hold less of it. The money supply has not changed yet, so prices must jump up to cut the real value of money. The exchange rate jumps with US prices. After that, both rise 5 percent a year."},"q2":{"prompt":"The US interest rate starts at 4 percent. What is it after the news?","options":[{"key":"seven","text":"7 percent"},{"key":"five","text":"5 percent"},{"key":"four","text":"4 percent, it does not change"},{"key":"nine","text":"9 percent"}],"answer":"seven","why":"The interest rate is the real rate plus expected inflation. That is 2 plus 2, or 4 percent, before the news, and 2 plus 5, or 7 percent, after it."},"result":"The interest rate jumps from 4 to 7 percent. Prices and the exchange rate jump up at once, then rise 5 percent a year. The dashed line is the simple model, with no jump.","nums":{"e_start":1.2,"e_before":1.3262051016642527,"e_day":1.5408305000252895,"e_end":1.9784655248401537,"dep_before":1.9999999999999944,"dep_after":5.000000000000003,"i_before":4.0,"i_after":7.0,"pi_h_before":2.0,"pi_h_after":5.0,"pi_o_before":0.0,"pi_o_after":0.0}},{"id":"fight","name":"The Fed fights inflation","model":"general","peg":false,"numer":"home","e0":1.2,"rate_title":"Dollars per euro","home":{"label":"US","adj":"US","mu0":6.0,"mu1":3.0,"g0":0.0,"g1":0.0,"jump":0.0},"other":{"label":"Europe","adj":"European","mu0":0.0,"mu1":0.0,"g0":0.0,"g1":0.0,"jump":0.0},"event":"In year 5 the Fed announces that money will grow only 3 percent a year, not 6, and everyone believes it.","facts":["Use the general model. People hold less money when the interest rate is higher.","The real interest rate is 2 percent.","US output does not grow, and nothing changes in Europe."],"q1":{"prompt":"What happens to the exchange rate in year 5, when the news comes out?","options":[{"key":"jump_down","text":"It jumps down at once, then rises more slowly than before"},{"key":"jump_up","text":"It jumps up at once, because the US interest rate falls"},{"key":"bend","text":"It does not jump. It only starts to rise more slowly"},{"key":"stay","text":"It jumps down, then stays at the new level"}],"answer":"jump_down","why":"Expected inflation falls from 6 to 3 percent, so by the Fisher effect the interest rate falls at once. Holding money costs less, so people want to hold more of it. The money supply has not changed yet, so prices must jump down. The exchange rate jumps down with US prices, and the dollar gains at once. After that, both rise 3 percent a year."},"q2":{"prompt":"The US interest rate starts at 8 percent. What is it after the news?","options":[{"key":"five","text":"5 percent"},{"key":"three","text":"3 percent"},{"key":"eight","text":"8 percent, it does not change"},{"key":"eleven","text":"11 percent"}],"answer":"five","why":"The interest rate is the real rate plus expected inflation. That is 2 plus 6, or 8 percent, before the news, and 2 plus 3, or 5 percent, after it."},"result":"The interest rate falls from 8 to 5 percent. Prices and the exchange rate jump down at once, then rise 3 percent a year instead of 6. The dashed line is the simple model, with no jump.","nums":{"e_start":1.2,"e_before":1.6198305689940136,"e_day":1.3942010912739389,"e_end":1.6198305690912036,"dep_before":5.9999999999999964,"dep_after":3.0000000000000115,"i_before":8.0,"i_after":5.0,"pi_h_before":6.0,"pi_h_after":3.0,"pi_o_before":0.0,"pi_o_after":0.0}},{"id":"peg","name":"The dirham peg","model":"simple","peg":true,"numer":"other","e0":3.6725,"rate_title":"Dirhams per dollar","home":{"label":"US","adj":"US","mu0":2.0,"mu1":5.0,"g0":0.0,"g1":0.0,"jump":0.0},"other":{"label":"UAE","adj":"UAE","mu0":2.0,"mu1":5.0,"g0":0.0,"g1":0.0,"jump":0.0},"event":"The UAE keeps the dirham fixed at 3.6725 dirhams per dollar. In year 5 the Fed raises US money growth from 2 to 5 percent a year.","facts":["Output does not grow in either country.","Use the simple model and relative PPP."],"q1":{"prompt":"In the model, what must happen to inflation in the UAE after year 5?","options":[{"key":"rise","text":"It must rise, as US inflation rises"},{"key":"same","text":"It stays the same, because the UAE did not change its policy"},{"key":"fall","text":"It must fall, so that the dirham stays fixed"},{"key":"any","text":"It can be anything the UAE central bank chooses"}],"answer":"rise","why":"With a fixed exchange rate the rate of depreciation is zero. Relative PPP then says UAE inflation must equal US inflation. So when US inflation rises, UAE inflation must rise too. This is what the model implies. It is not a claim about data."},"q2":{"prompt":"UAE inflation starts at 2 percent. In the model, what is it after year 5?","options":[{"key":"five","text":"5 percent"},{"key":"two","text":"2 percent, it does not change"},{"key":"three","text":"3 percent"},{"key":"seven","text":"7 percent"}],"answer":"five","why":"UAE inflation must match US inflation, which is now 5 percent. To keep the peg, the UAE must also let its money grow 5 percent a year. The UAE cannot set its own monetary policy. That is the cost of the peg."},"result":"The rate stays at 3.6725 dirhams per dollar. US and UAE prices both bend upward in year 5, from 2 to 5 percent a year, and so must UAE money.","nums":{"e_start":3.6725,"e_before":3.6725,"e_day":3.6725,"e_end":3.6725,"dep_before":0.0,"dep_after":0.0,"i_before":4.0,"i_after":7.0,"pi_h_before":2.0,"pi_h_after":5.0,"pi_o_before":2.0,"pi_o_after":5.0}}],"explore":{"base":{"mu":2.0,"g":0.0},"sliders":{"mu":{"min":0,"max":10,"step":0.5},"g":{"min":0,"max":5,"step":0.5},"jump":{"min":0,"max":20,"step":1}},"presets":[{"label":"Case 1, a one-time rise","mu_us":2,"mu_eu":2,"g_us":0,"g_eu":0,"jump":10,"dep":0},{"label":"The class vote","mu_us":6,"mu_eu":2,"g_us":2,"g_eu":2,"jump":0,"dep":4},{"label":"Relative PPP","mu_us":5,"mu_eu":2,"g_us":0,"g_eu":0,"jump":0,"dep":3}]},"ui":{"right":"Right.","wrong":"Not quite. The right answer is marked.","tab_cards":"Policy cards","tab_explore":"Explore","card_of":"Card {n} of {total}","model_simple":"Simple model","model_general":"General model","score":"{right} right out of {asked}","answer_first":"Answer both questions to see the ten years.","back":"Back","next":"Next card","replay":"Play the ten years again","done":"That was the last card. Go back to any card, or try the Explore tab.","t_money":"Money supply, start at 100","t_prices":"Prices, start at 100","t_inflation":"Inflation, percent a year","t_interest":"Interest rate, percent","years":"years","news":"news","simple_label":"simple model","weaker":"A higher number of dollars per euro means a weaker dollar.","log_note":"Money, prices and the exchange rate are drawn on a log scale, so steady growth is a straight line.","jump_note":"The jump is drawn to show its shape. The book gives no number for its size, so the axes for prices and the exchange rate show no numbers.","r_rate":"Rate in year 10","r_dep":"Change in the rate each year","r_infl":"{c} inflation","r_interest":"US interest rate","was":"was {v}","pct_year":"{v} percent a year","pct":"{v} percent","explore_intro":"Before year 5, money grows 2 percent a year in the US and in Europe, and output does not grow. Choose what happens from year 5 on, and the ten years redraw.","s_mu_us":"US money growth from year 5","s_mu_eu":"European money growth from year 5","s_g_us":"US output growth from year 5","s_g_eu":"European output growth from year 5","s_jump":"One-time rise in US money in year 5","presets":"Try the deck's examples","model_choice":"Choose the model","r_infl_us":"US inflation","r_infl_eu":"European inflation","r_depr":"Depreciation of the dollar","r_i_us":"US interest rate","r_i_eu":"European interest rate","eq_head":"In growth rates, depreciation equals the money growth gap minus the output growth gap.","eq_line":"({a} minus {b}) minus ({c} minus {d}) = {v} percent a year","lower":"lower","higher":"higher"}};</script>
+<script>
+/* Shared behavior for the course simulations. build_sims.py puts this into every page, after
+   the SIM data and before the simulation's own script.
+
+     Sim.h, Sim.svg   build an HTML or an SVG element
+     Sim.Plot         one set of axes with a data scale, and helpers to draw on it
+     Sim.question     a multiple-choice question that marks itself and shows the reason
+     Sim.tabs         a row of tabs that shows one panel at a time
+     Sim.readouts     a row of labelled numbers
+     Sim.slider       a labelled range input
+     Sim.tween        a short animation that respects reduced motion
+     Sim.expect       compares a number the page computed with the one Python proved
+     Sim.fmt, Sim.fill  number formatting and {name} templates
+
+   Every word a student reads comes from SIM, which the builder has checked against the
+   writing rules. Nothing here writes a sentence of its own. */
+"use strict";
+
+const Sim = (() => {
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const LETTERS = "ABCDEFGH";
+
+  function setAttrs(e, attrs) {
+    if (!attrs) return e;
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v === undefined || v === null || v === false) continue;
+      e.setAttribute(k, v === true ? "" : String(v));
+    }
+    return e;
+  }
+
+  function svg(tag, attrs, parent) {
+    const e = setAttrs(document.createElementNS(SVGNS, tag), attrs);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  function h(tag, attrs, ...kids) {
+    const e = document.createElement(tag);
+    if (attrs) {
+      for (const [k, v] of Object.entries(attrs)) {
+        if (v === undefined || v === null || v === false) continue;
+        if (k === "class") e.className = v;
+        else if (k === "text") e.textContent = v;
+        else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2), v);
+        else e.setAttribute(k, v === true ? "" : String(v));
+      }
+    }
+    for (const kid of kids.flat(Infinity)) {
+      if (kid === null || kid === undefined || kid === false) continue;
+      const leaf = typeof kid === "string" || typeof kid === "number";
+      e.appendChild(leaf ? document.createTextNode(String(kid)) : kid);
+    }
+    return e;
+  }
+
+  function fmt(x, dp = 0) {
+    return Number(x).toLocaleString("en-US", { minimumFractionDigits: dp, maximumFractionDigits: dp });
+  }
+
+  function fill(template, vals) {
+    return String(template).replace(/\{(\w+)\}/g, (m, k) =>
+      Object.prototype.hasOwnProperty.call(vals, k) ? String(vals[k]) : m);
+  }
+
+  const reduced = () =>
+    !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  /* On a narrow screen the graph sits above the questions, out of sight once a student has
+     scrolled down to answer. Bring it back into view before it moves. The jump is instant,
+     since a smooth scroll was seen to start a second late and miss most of the animation. */
+  function showOnNarrow(el) {
+    const narrow = window.matchMedia && window.matchMedia("(max-width: 899px)").matches;
+    if (narrow && el && el.scrollIntoView) el.scrollIntoView({ behavior: "auto", block: "start" });
+  }
+
+  /* Runs onFrame(k) with k easing from 0 to 1. Returns a function that stops it.
+     A browser stops drawing frames in a hidden tab or a hidden frame, which once left a graph
+     frozen half way. A timer finishes the move if the frames have not, so the end state
+     always arrives. */
+  function tween(ms, onFrame, onDone) {
+    let stopped = false;
+    let finished = false;
+    const finish = () => {
+      if (finished || stopped) return;
+      finished = true;
+      onFrame(1);
+      if (onDone) onDone();
+    };
+    if (reduced() || ms <= 0) {
+      finish();
+      return () => {};
+    }
+    let start = null;
+    const step = (ts) => {
+      if (stopped || finished) return;
+      if (start === null) start = ts;
+      const k = Math.min(1, (ts - start) / ms);
+      if (k >= 1) { finish(); return; }
+      onFrame(k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2);
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    const timer = setTimeout(finish, ms + 400);
+    return () => { stopped = true; clearTimeout(timer); };
+  }
+
+  /* The page's own number against the one check_numbers() proved. A mismatch goes to the
+     console, where the browser test looks for it. */
+  function expect(label, got, want, tol = 1e-6) {
+    if (!(Math.abs(got - want) <= tol)) {
+      console.error("SIM CHECK FAILED", label, "page", got, "python", want);
+      return false;
+    }
+    return true;
+  }
+
+  let plotSeq = 0;
+
+  class Plot {
+    /* o: xmin, xmax, ymin, ymax, xticks, yticks, xfmt, yfmt, xlabel, ylabel, label,
+          width, height, m (margins l, r, t, b) */
+    constructor(host, o) {
+      this.o = Object.assign({ width: 480, height: 400, xfmt: (v) => fmt(v), yfmt: (v) => fmt(v) }, o);
+      this.o.m = Object.assign({ l: 56, r: 18, t: 34, b: 50 }, o.m || {});
+      const { width, height } = this.o;
+      this.id = "plot" + (++plotSeq);
+      this.root = svg("svg", {
+        viewBox: `0 0 ${width} ${height}`, class: "plot", role: "img", "aria-label": o.label || "",
+      }, host);
+      const defs = svg("defs", null, this.root);
+      const clip = svg("clipPath", { id: this.id + "c" }, defs);
+      svg("rect", { x: this.x0, y: this.y1, width: this.x1 - this.x0, height: this.y0 - this.y1 }, clip);
+      const mk = svg("marker", {
+        id: this.id + "a", viewBox: "0 0 10 10", refX: 8, refY: 5, markerWidth: 6, markerHeight: 6,
+        orient: "auto-start-reverse",
+      }, defs);
+      svg("path", { d: "M0,0 L10,5 L0,10 z", class: "arrowhead" }, mk);
+      this.gGrid = svg("g", null, this.root);
+      this.gData = svg("g", { "clip-path": `url(#${this.id}c)` }, this.root);
+      this.gAxis = svg("g", null, this.root);
+      this.gTop = svg("g", null, this.root);
+      this.layers = new Map();
+      this.drawAxes();
+    }
+
+    get x0() { return this.o.m.l; }
+    get x1() { return this.o.width - this.o.m.r; }
+    get y0() { return this.o.height - this.o.m.b; }
+    get y1() { return this.o.m.t; }
+
+    x(v) { const o = this.o; return this.x0 + ((v - o.xmin) / (o.xmax - o.xmin)) * (this.x1 - this.x0); }
+    y(v) { const o = this.o; return this.y0 - ((v - o.ymin) / (o.ymax - o.ymin)) * (this.y0 - this.y1); }
+
+    drawAxes() {
+      const o = this.o;
+      for (const t of o.yticks || []) {
+        svg("line", { x1: this.x0, x2: this.x1, y1: this.y(t), y2: this.y(t), class: "gridline" }, this.gGrid);
+        svg("text", { x: this.x0 - 8, y: this.y(t) + 5, "text-anchor": "end", class: "tick" }, this.gAxis)
+          .textContent = o.yfmt(t);
+      }
+      for (const t of o.xticks || []) {
+        svg("line", { x1: this.x(t), x2: this.x(t), y1: this.y0, y2: this.y1, class: "gridline" }, this.gGrid);
+        svg("text", { x: this.x(t), y: this.y0 + 21, "text-anchor": "middle", class: "tick" }, this.gAxis)
+          .textContent = o.xfmt(t);
+      }
+      svg("line", { x1: this.x0, x2: this.x0, y1: this.y0, y2: this.y1 - 6, class: "axis-line" }, this.gAxis);
+      svg("line", { x1: this.x0, x2: this.x1 + 6, y1: this.y0, y2: this.y0, class: "axis-line" }, this.gAxis);
+      if (o.xlabel) {
+        svg("text", { x: this.x1, y: o.height - 6, "text-anchor": "end", class: "axis-label" }, this.gAxis)
+          .textContent = o.xlabel;
+      }
+      if (o.ylabel) {
+        svg("text", { x: 4, y: 18, "text-anchor": "start", class: "axis-label" }, this.gAxis)
+          .textContent = o.ylabel;
+      }
+    }
+
+    /* Named layers, cleared and redrawn as the state changes. "top" layers are not clipped. */
+    layer(name, top) {
+      if (!this.layers.has(name)) this.layers.set(name, svg("g", null, top ? this.gTop : this.gData));
+      return this.layers.get(name);
+    }
+    clear(name) { const g = this.layers.get(name); if (g) g.replaceChildren(); }
+    clearAll() { for (const g of this.layers.values()) g.replaceChildren(); }
+
+    path(g, pts, cls) {
+      const d = pts.map((p, i) => (i ? "L" : "M") + this.x(p[0]).toFixed(1) + " " + this.y(p[1]).toFixed(1)).join(" ");
+      return svg("path", { d, class: cls }, g);
+    }
+    segment(g, xa, ya, xb, yb, cls) { return this.path(g, [[xa, ya], [xb, yb]], cls); }
+    point(g, x, y, cls, r = 7) {
+      return svg("circle", { cx: this.x(x).toFixed(1), cy: this.y(y).toFixed(1), r, class: cls }, g);
+    }
+    /* A label at a data point, moved by dx and dy pixels, with an optional subscript. */
+    text(g, x, y, str, cls, opt = {}) {
+      const t = svg("text", {
+        x: (this.x(x) + (opt.dx || 0)).toFixed(1), y: (this.y(y) + (opt.dy || 0)).toFixed(1),
+        "text-anchor": opt.anchor || "start", class: cls,
+      }, g);
+      t.appendChild(document.createTextNode(str));
+      if (opt.sub) svg("tspan", { dy: 5, "font-size": "0.72em" }, t).textContent = opt.sub;
+      return t;
+    }
+    guides(g, x, y) {
+      this.segment(g, this.o.xmin, y, x, y, "guide");
+      this.segment(g, x, this.o.ymin, x, y, "guide");
+    }
+    arrow(g, xa, ya, xb, yb) {
+      return svg("path", {
+        d: `M${this.x(xa).toFixed(1)} ${this.y(ya).toFixed(1)} L${this.x(xb).toFixed(1)} ${this.y(yb).toFixed(1)}`,
+        class: "arrow", "marker-end": `url(#${this.id}a)`,
+      }, g);
+    }
+    /* Labels on the axes, drawn just inside the plot so they never sit on a tick number.
+       flip puts the label on the other side of its guide line, for two marks close together. */
+    ymark(g, y, str, sub, cls, flip) {
+      return this.text(g, this.o.xmin, y, str, "axmark " + (cls || ""), { dx: 6, dy: flip ? 17 : -6, sub });
+    }
+    xmark(g, x, str, sub, cls, flip) {
+      return this.text(g, x, this.o.ymin, str, "axmark " + (cls || ""),
+        { dx: flip ? -5 : 5, dy: -8, sub, anchor: flip ? "end" : "start" });
+    }
+  }
+
+  /* q: prompt, options [{key, text}], answer, why. onDone(right, key) runs once. */
+  function question(host, q, onDone) {
+    const box = h("div", { class: "q" });
+    const list = h("div", { class: "options", role: "group", "aria-label": q.prompt });
+    const fb = h("div", { class: "feedback", hidden: true, "aria-live": "polite" });
+    const buttons = q.options.map((o, i) => {
+      const b = h("button", { class: "opt", type: "button" },
+        h("span", { class: "letter", text: LETTERS[i] }), h("span", { text: o.text }));
+      b.addEventListener("click", () => choose(i));
+      list.appendChild(b);
+      return b;
+    });
+    let done = false;
+    function choose(i) {
+      if (done) return;
+      done = true;
+      const right = q.options[i].key === q.answer;
+      buttons.forEach((b, j) => {
+        b.disabled = true;
+        if (q.options[j].key === q.answer) b.dataset.state = "right";
+      });
+      if (!right) buttons[i].dataset.state = "wrong";
+      fb.className = "feedback " + (right ? "is-right" : "is-wrong");
+      fb.replaceChildren(h("span", { class: "verdict", text: right ? SIM.ui.right : SIM.ui.wrong }), " ",
+        h("span", { text: q.why }));
+      fb.hidden = false;
+      if (onDone) onDone(right, q.options[i].key);
+    }
+    box.append(h("p", { class: "q-prompt", text: q.prompt }), list, fb);
+    host.appendChild(box);
+    return { box, choose };
+  }
+
+  /* items: [{id, label, panel}]. Returns the tab bar. The caller places it. */
+  function tabs(items, initial, onShow) {
+    const bar = h("div", { class: "tabs", role: "tablist" });
+    const btns = items.map((it, i) => {
+      const b = h("button", {
+        class: "tab", type: "button", role: "tab", id: "tab-" + it.id, "aria-controls": "panel-" + it.id,
+      }, it.label);
+      b.addEventListener("click", () => show(i));
+      b.addEventListener("keydown", (e) => {
+        if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+        e.preventDefault();
+        const n = (i + (e.key === "ArrowRight" ? 1 : items.length - 1)) % items.length;
+        show(n);
+        btns[n].focus();
+      });
+      it.panel.id = "panel-" + it.id;
+      it.panel.setAttribute("role", "tabpanel");
+      it.panel.setAttribute("aria-labelledby", "tab-" + it.id);
+      bar.appendChild(b);
+      return b;
+    });
+    function show(i) {
+      items.forEach((it, j) => {
+        const on = i === j;
+        btns[j].setAttribute("aria-selected", on ? "true" : "false");
+        btns[j].tabIndex = on ? 0 : -1;
+        it.panel.hidden = !on;
+      });
+      if (onShow) onShow(items[i].id);
+    }
+    show(initial || 0);
+    bar.show = show;
+    return bar;
+  }
+
+  /* specs: [{id, label}]. Returns update({id: {now, was}}). */
+  function readouts(host, specs) {
+    const wrap = h("div", { class: "readouts" });
+    const cells = {};
+    for (const s of specs) {
+      const v = h("span", { class: "r-value", "data-readout": s.id });
+      const was = h("span", { class: "r-was" });
+      wrap.appendChild(h("div", { class: "readout" }, h("span", { class: "r-label", text: s.label }), v, " ", was));
+      cells[s.id] = { v, was };
+    }
+    host.appendChild(wrap);
+    return (vals) => {
+      for (const [k, val] of Object.entries(vals)) {
+        if (!cells[k]) continue;
+        cells[k].v.textContent = val.now;
+        cells[k].was.textContent = val.was || "";
+      }
+    };
+  }
+
+  /* spec: id, label, min, max, step, value, left, right. show(v) formats the value. */
+  function slider(host, spec, show, onInput) {
+    const input = h("input", { type: "range", id: spec.id, min: spec.min, max: spec.max, step: spec.step, value: spec.value });
+    const out = h("output", { for: spec.id });
+    host.appendChild(h("div", { class: "slider" },
+      h("label", { for: spec.id, text: spec.label }), input,
+      h("div", { class: "ends" }, h("span", { text: spec.left || "" }), out, h("span", { text: spec.right || "" }))));
+    const update = (fire) => {
+      out.textContent = show ? show(Number(input.value)) : input.value;
+      if (fire && onInput) onInput(Number(input.value));
+    };
+    input.addEventListener("input", () => update(true));
+    update(false);
+    return {
+      input,
+      get value() { return Number(input.value); },
+      set(v, fire = true) { input.value = String(v); update(fire); },
+    };
+  }
+
+  return { h, svg, fmt, fill, tween, expect, Plot, question, tabs, readouts, slider, reduced, showOnNarrow };
+})();
+
+</script>
+<script>
+/* ECON 331, Chapter 14. Money and the Dollar, a policy room on the monetary approach.
+   Every card, number and sentence comes from SIM, which sim_ch14_policy.py builds and checks
+   against check_ch14_numbers.py. This file only draws and moves things.
+
+   Four panels follow the deck's chain, money, then prices, then the exchange rate, with a fourth
+   for inflation in the simple model or the interest rate in the general one. Money, prices and
+   the rate are drawn on a log scale, as the deck's figures are. */
+(() => {
+  const { h, Plot, fmt, fill, tween, expect, question, tabs, readouts, slider } = Sim;
+  const U = SIM.ui;
+  const D = SIM.model;
+  const CARDS = SIM.cards;
+  const app = document.getElementById("app");
+
+  /* ---------------------------------------------------------------- the model, as in the Python */
+  const logMoney = (c, t) => Math.log(100) + (c.mu0 * Math.min(t, D.T) + c.mu1 * Math.max(t - D.T, 0)) / 100
+    + (t >= D.T ? Math.log(1 + c.jump / 100) : 0);
+  const logOutput = (c, t) => (c.g0 * Math.min(t, D.T) + c.g1 * Math.max(t - D.T, 0)) / 100;
+  const inflation = (c, t) => (t < D.T ? c.mu0 - c.g0 : c.mu1 - c.g1);
+  const interest = (c, t) => D.r + inflation(c, t);
+  const logPrice = (c, t, general) => logMoney(c, t) - logOutput(c, t)
+    + (general ? (D.b * (interest(c, t) - interest(c, 0))) / 100 : 0);
+
+  function state(card, t, general) {
+    const g = general === undefined ? card.model === "general" : general;
+    const lph = logPrice(card.home, t, g);
+    const lpo = logPrice(card.other, t, g);
+    const sign = card.numer === "home" ? 1 : -1;
+    return {
+      e: card.e0 * Math.exp(sign * (lph - lpo)), p_h: Math.exp(lph), p_o: Math.exp(lpo),
+      m_h: Math.exp(logMoney(card.home, t)), m_o: Math.exp(logMoney(card.other, t)),
+      i_h: interest(card.home, t), i_o: interest(card.other, t),
+      pi_h: inflation(card.home, t), pi_o: inflation(card.other, t),
+    };
+  }
+  const slope = (card, a, b) => ((Math.log(state(card, b).e) - Math.log(state(card, a).e)) / (b - a)) * 100;
+  function numbers(card) {
+    const before = state(card, D.T - 1e-9);
+    const day = state(card, D.T);
+    return {
+      e_start: state(card, 0).e, e_before: before.e, e_day: day.e, e_end: state(card, D.T_end).e,
+      dep_before: slope(card, 0, D.T - 1e-9), dep_after: slope(card, D.T, D.T_end),
+      i_before: before.i_h, i_after: day.i_h,
+      pi_h_before: before.pi_h, pi_h_after: day.pi_h, pi_o_before: before.pi_o, pi_o_after: day.pi_o,
+    };
+  }
+  // every card's numbers against the Python's, as soon as the page loads
+  for (const c of CARDS) {
+    const n = numbers(c);
+    for (const [k, v] of Object.entries(c.nums)) expect(c.id + " " + k, n[k], v, 1e-6);
+  }
+
+  /* ---------------------------------------------------------------- panels */
+  const whole = (v) => Math.abs(v - Math.round(v)) < 1e-9;
+  const num = (v) => fmt(v, whole(v) ? 0 : 1);
+  const signedNum = (v) => (v > 1e-9 ? "+" : "") + num(Math.abs(v) < 1e-9 ? 0 : v);
+
+  function niceStep(span, maxN) {
+    const raw = span / maxN;
+    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+    // no 2.5, since a tick at 102.5 prints as 103 with no decimals
+    for (const m of [1, 2, 5, 10]) if (m * pow >= raw - 1e-12) return m * pow;
+    return 10 * pow;
+  }
+  function tickList(lo, hi, maxN) {
+    const step = niceStep(hi - lo, maxN);
+    const out = [];
+    for (let v = Math.ceil(lo / step - 1e-9) * step; v <= hi + 1e-9; v += step) out.push(Number(v.toFixed(10)));
+    return { out, step };
+  }
+
+  /* The y range of a log panel, from every value it will ever show, so the axes never move
+     while the years draw. A flat or nearly flat series gets a range of about 10 percent. */
+  function logRange(values, bare) {
+    let lo = Math.min(...values);
+    let hi = Math.max(...values);
+    if (hi / lo < 1.1) { const mid = Math.sqrt(hi * lo); lo = mid / 1.06; hi = mid * 1.06; }
+    const pad = (Math.log(hi) - Math.log(lo)) * 0.08;
+    const t = tickList(lo, hi, 4);
+    const dp = t.step >= 1 ? 0 : 2;      // rates as the deck writes them, 1.20 not 1.2
+    return {
+      ymin: Math.log(lo) - pad, ymax: Math.log(hi) + pad,
+      yticks: bare ? [] : t.out.map((v) => Math.log(v)), yfmt: (v) => fmt(Math.exp(v), dp),
+    };
+  }
+  function linRange(values) {
+    const lo = Math.min(0, ...values);
+    const hi = Math.max(...values);
+    const top = Math.max(8, Math.ceil((hi + 1) / 2) * 2);
+    const bottom = lo < 0 ? Math.floor((lo - 1) / 2) * 2 : 0;
+    const t = tickList(bottom, top, 4);
+    return { ymin: bottom - 0.4, ymax: top + 0.4, yticks: t.out, yfmt: (v) => fmt(v) };
+  }
+
+  const WIDE = "stroke-width: 7; opacity: 0.45";
+
+  /* Four panels for one card, or for the Explore tab. rows(tEnd) gives the series to draw. */
+  function makePanels(host, card, general) {
+    const all = sample(card, D.T_end, general);
+    const simple = general ? sample(card, D.T_end, false) : [];
+    const bare = general;   // the book gives no size for the jump, so no numbers on these axes
+    const specs = [
+      { id: "money", title: U.t_money, range: logRange(all.flatMap(([, s]) => [s.m_h, s.m_o])) },
+      { id: "prices", title: U.t_prices, range: logRange(all.concat(simple).flatMap(([, s]) => [s.p_h, s.p_o]), bare) },
+      { id: "rate", title: card.rate_title, range: logRange(all.concat(simple).map(([, s]) => s.e), bare) },
+      general
+        ? { id: "rates", title: U.t_interest, range: linRange(all.flatMap(([, s]) => [s.i_h, s.i_o])) }
+        : { id: "rates", title: U.t_inflation, range: linRange(all.flatMap(([, s]) => [s.pi_h, s.pi_o])) },
+    ];
+    const grid = h("div", { class: "pair" });
+    host.replaceChildren(grid);
+    const P = {};
+    for (const sp of specs) {
+      const cell = h("div", null, h("p", { class: "fig-note", text: sp.title }));
+      grid.appendChild(cell);
+      const p = new Plot(cell, Object.assign({
+        xmin: 0, xmax: D.T_end, xticks: [0, 2, 4, 6, 8, 10], xfmt: (v) => String(v), xlabel: U.years,
+        width: 480, height: 312, m: { l: 70, r: 92, t: 16, b: 58 }, label: sp.title,
+      }, sp.range));
+      p.segment(p.layer("news"), D.T, p.o.ymin, D.T, p.o.ymax, "guide");
+      // on the row of "years", below the year numbers. On their row it read as "4 news 6".
+      p.text(p.layer("newslabel", true), D.T, p.o.ymin, U.news, "tick", { anchor: "middle", dy: p.o.m.b - 6 });
+      P[sp.id] = p;
+    }
+    return P;
+  }
+
+  function sample(card, tEnd, general) {
+    const ts = [];
+    for (let t = 0; t < tEnd; t += 0.05) ts.push(t);
+    ts.push(tEnd);
+    if (tEnd >= D.T) ts.push(D.T - 1e-6, D.T);
+    ts.sort((a, b) => a - b);
+    return ts.map((t) => [t, state(card, t, general)]);
+  }
+
+  /* Lines, then a label at the head of each. Two heads close together are pushed apart. */
+  function lines(p, list) {
+    p.clear("data");
+    p.clear("labels");
+    const g = p.layer("data");
+    const gl = p.layer("labels", true);
+    for (const s of list) {
+      const el = p.path(g, s.pts, s.cls);
+      if (s.wide) el.setAttribute("style", WIDE);
+    }
+    const heads = list.filter((s) => s.label).map((s) => {
+      const [x, y] = s.pts[s.pts.length - 1];
+      return { s, x, y, py: p.y(y) };
+    });
+    heads.sort((a, b) => a.py - b.py);
+    // Two heads close together are stacked 22 pixels apart, upward in the lower half of the
+    // panel, since the first build pushed the lower label down onto the year numbers.
+    const mid = (p.y0 + p.y1) / 2;
+    for (let i = 1; i < heads.length; i += 1) {
+      if (heads[i].py - heads[i - 1].py < 22) {
+        const low = heads[i].py > mid;
+        heads[i - 1].dy = low ? -18 : -4;
+        heads[i].dy = low ? 4 : 18;
+      }
+    }
+    for (const hd of heads) {
+      p.text(gl, hd.x, hd.y, hd.s.label, "lbl " + hd.s.lcls, { dx: 8, dy: hd.dy === undefined ? 6 : hd.dy });
+    }
+  }
+
+  function drawPanels(P, card, tNow, general) {
+    const pts = sample(card, tNow, general);
+    const simple = general ? sample(card, tNow, false) : null;
+    const HOME = { cls: "curve c-demand", lcls: "l-demand", label: card.home.label };
+    const OTHER = { cls: "curve c-supply", lcls: "l-supply", label: card.other.label, wide: true };
+    const pair = (fh, fo) => [
+      Object.assign({}, OTHER, { pts: pts.map(([t, s]) => [t, fo(s)]) }),
+      Object.assign({}, HOME, { pts: pts.map(([t, s]) => [t, fh(s)]) }),
+    ];
+    lines(P.money, pair((s) => Math.log(s.m_h), (s) => Math.log(s.m_o)));
+    const priceLines = pair((s) => Math.log(s.p_h), (s) => Math.log(s.p_o));
+    const rateLines = [{ cls: "curve c-ink", pts: pts.map(([t, s]) => [t, Math.log(s.e)]) }];
+    if (simple) {
+      priceLines.unshift({ cls: "curve c-old dashed", pts: simple.map(([t, s]) => [t, Math.log(s.p_h)]) });
+      rateLines.unshift({ cls: "curve c-old dashed", pts: simple.map(([t, s]) => [t, Math.log(s.e)]) });
+    } else {
+      const last = pts[pts.length - 1][1].e;
+      rateLines[0].label = fmt(last, card.e0 > 3 ? 4 : 2);
+      rateLines[0].lcls = "l-ink";
+    }
+    lines(P.prices, priceLines);
+    lines(P.rate, rateLines);
+    // The dashed line's name sits inside the panel, on the side away from the other line, as the
+    // deck's jump figure prints "simple model, no jump" under it. At the line's end it was cut off.
+    if (simple && tNow >= 8) {
+      const x = 7.8;     // at 7.5 the label's left end touched the jump at year 5
+      const ys = Math.log(state(card, x, false).e);
+      const below = ys < Math.log(state(card, x, general).e);
+      P.rate.text(P.rate.layer("labels", true), x, ys, U.simple_label, "lbl l-old",
+        { anchor: "middle", dy: below ? 30 : -14 });
+    }
+    lines(P.rates, general
+      ? pair((s) => s.i_h, (s) => s.i_o)
+      : pair((s) => s.pi_h, (s) => s.pi_o));
+  }
+
+  /* ---------------------------------------------------------------- the cards tab */
+  let pos = 0;
+  let right = 0;
+  let asked = 0;
+  const scored = new Set();
+  let stop = () => {};
+
+  const cardsPanel = h("section", { class: "layout two-one" });
+  const figCard = h("div", { class: "card figure" });
+  const qCard = h("div", { class: "card" });
+  // Side by side on a wide screen. In one column the card comes first, since the first build put
+  // four panels above it and a student scrolled past a screen of charts to find the question.
+  // The figure is brought into view when the years start to draw.
+  const oneColumn = window.matchMedia ? window.matchMedia("(max-width: 899px)") : { matches: false };
+  const arrange = () => (oneColumn.matches ? cardsPanel.append(qCard, figCard) : cardsPanel.append(figCard, qCard));
+  arrange();
+  if (oneColumn.addEventListener) oneColumn.addEventListener("change", arrange);
+
+  function notesFor(card) {
+    const out = [];
+    if (card.numer === "home") out.push(U.weaker);
+    out.push(U.log_note);
+    if (card.model === "general") out.push(U.jump_note);
+    return out.map((t) => h("p", { class: "fig-note", text: t }));
+  }
+
+  function readoutsFor(host, card) {
+    const n = numbers(card);
+    const specs = [];
+    const vals = {};
+    const general = card.model === "general";
+    if (!general) {
+      specs.push({ id: "rate", label: U.r_rate });
+      vals.rate = { now: fmt(n.e_end, card.e0 > 3 ? 4 : 2), was: fill(U.was, { v: fmt(n.e_start, card.e0 > 3 ? 4 : 2) }) };
+    }
+    if (!card.peg) {
+      specs.push({ id: "dep", label: U.r_dep });
+      vals.dep = { now: fill(U.pct_year, { v: signedNum(n.dep_after) }), was: fill(U.was, { v: signedNum(n.dep_before) }) };
+    }
+    if (general) {
+      specs.push({ id: "i", label: U.r_interest });
+      vals.i = { now: fill(U.pct, { v: num(n.i_after) }), was: fill(U.was, { v: num(n.i_before) }) };
+    }
+    specs.push({ id: "pih", label: fill(U.r_infl, { c: card.home.adj }) });
+    vals.pih = { now: fill(U.pct_year, { v: num(n.pi_h_after) }), was: fill(U.was, { v: num(n.pi_h_before) }) };
+    if (card.other.mu0 !== 0 || card.other.mu1 !== 0 || card.peg) {
+      specs.push({ id: "pio", label: fill(U.r_infl, { c: card.other.adj }) });
+      vals.pio = { now: fill(U.pct_year, { v: num(n.pi_o_after) }), was: fill(U.was, { v: num(n.pi_o_before) }) };
+    }
+    readouts(host, specs)(vals);
+  }
+
+  function score(card, qid, ok) {
+    const id = card.id + "/" + qid;
+    if (scored.has(id)) return;
+    scored.add(id);
+    asked += 1;
+    if (ok) right += 1;
+  }
+
+  function showCard() {
+    stop();
+    const card = CARDS[pos];
+    const general = card.model === "general";
+    const plotHost = h("div");
+    figCard.replaceChildren(plotHost, ...notesFor(card));
+    const P = makePanels(plotHost, card, general);
+    drawPanels(P, card, D.T - 1e-6, general);
+
+    const scoreEl = h("span", { class: "score", text: fill(U.score, { right, asked }) });
+    const top = h("div", { class: "event-top" },
+      h("span", { text: fill(U.card_of, { n: pos + 1, total: CARDS.length }) + ", " + (general ? U.model_general : U.model_simple) }),
+      scoreEl);
+    const qHost = h("div");
+    const hint = h("p", { class: "note", text: U.answer_first });
+    const result = h("p", { class: "result", hidden: true });
+    const readHost = h("div");
+    const back = h("button", { class: "btn secondary", type: "button", text: U.back, disabled: pos === 0 });
+    const replay = h("button", { class: "btn secondary", type: "button", text: U.replay, hidden: true });
+    const next = h("button", { class: "btn", type: "button", text: U.next });
+    const done = h("p", { class: "note", text: U.done, hidden: true });
+    back.addEventListener("click", () => { pos = Math.max(0, pos - 1); showCard(); });
+    next.addEventListener("click", () => {
+      if (pos < CARDS.length - 1) { pos += 1; showCard(); } else { done.hidden = false; }
+    });
+    const play = () => {
+      stop();
+      Sim.showOnNarrow(figCard);
+      stop = tween(2600, (k) => drawPanels(P, card, D.T + (D.T_end - D.T) * k, general), () => {
+        const n = numbers(card);
+        expect(card.id + " rate in year 10", n.e_end, card.nums.e_end, 1e-6);
+        result.hidden = false;
+      });
+    };
+    replay.addEventListener("click", play);
+    result.textContent = card.result;
+    const facts = h("ul", { class: "facts" }, card.facts.map((f) => h("li", { text: f })));
+    qCard.replaceChildren(top, h("h2", { text: card.name }), h("p", { class: "event-text", text: card.event }),
+      facts, qHost, hint, result, readHost, h("div", { class: "row" }, back, replay, next), done);
+
+    question(qHost, card.q1, (ok) => {
+      score(card, "q1", ok);
+      scoreEl.textContent = fill(U.score, { right, asked });
+      question(qHost, card.q2, (ok2) => {
+        score(card, "q2", ok2);
+        scoreEl.textContent = fill(U.score, { right, asked });
+        hint.hidden = true;
+        replay.hidden = false;
+        readoutsFor(readHost, card);
+        play();
+      });
+    });
+  }
+
+  /* ---------------------------------------------------------------- the explore tab */
+  const X = SIM.explore;
+  const exPanel = h("section", { class: "layout two-one" });
+  const exFig = h("div", { class: "card figure" });
+  const exCtl = h("div", { class: "card" }, h("p", { class: "lede", text: U.explore_intro }));
+  exPanel.append(exFig, exCtl);
+  const exPlots = h("div");
+  const exNotes = h("div");
+  exFig.append(exPlots, exNotes);
+  let exGeneral = false;
+
+  const modelRow = h("div", { class: "choice", role: "group", "aria-label": U.model_choice });
+  const modelBtns = [false, true].map((g) => {
+    const b = h("button", { class: "btn", type: "button", "aria-pressed": g === exGeneral ? "true" : "false",
+      text: g ? U.model_general : U.model_simple });
+    b.addEventListener("click", () => {
+      exGeneral = g;
+      modelBtns.forEach((bb, i) => bb.setAttribute("aria-pressed", (i === 1) === g ? "true" : "false"));
+      drawExplore();
+    });
+    return b;
+  });
+  modelRow.append(...modelBtns);
+  exCtl.append(h("p", { class: "q-prompt", text: U.model_choice }), modelRow);
+
+  const pctShow = (v) => fill(U.pct_year, { v: num(v) });
+  const mk = (id, label, kind, value, show) => slider(exCtl, {
+    id, label, min: X.sliders[kind].min, max: X.sliders[kind].max, step: X.sliders[kind].step,
+    value, left: U.lower, right: U.higher,
+  }, show, drawExplore);
+  const sMuUs = mk("ex-mu-us", U.s_mu_us, "mu", X.base.mu, pctShow);
+  const sMuEu = mk("ex-mu-eu", U.s_mu_eu, "mu", X.base.mu, pctShow);
+  const sGUs = mk("ex-g-us", U.s_g_us, "g", X.base.g, pctShow);
+  const sGEu = mk("ex-g-eu", U.s_g_eu, "g", X.base.g, pctShow);
+  const sJump = mk("ex-jump", U.s_jump, "jump", 0, (v) => fill(U.pct, { v: num(v) }));
+
+  const presetRow = h("div", { class: "choice" });
+  exCtl.append(h("p", { class: "q-prompt", text: U.presets }), presetRow);
+  for (const pr of X.presets) {
+    const b = h("button", { class: "btn secondary", type: "button", text: pr.label });
+    b.addEventListener("click", () => {
+      sMuUs.set(pr.mu_us, false);
+      sMuEu.set(pr.mu_eu, false);
+      sGUs.set(pr.g_us, false);
+      sGEu.set(pr.g_eu, false);
+      sJump.set(pr.jump, false);
+      const dep = drawExplore();
+      expect("preset " + pr.label, dep, pr.dep, 1e-9);
+    });
+    presetRow.appendChild(b);
+  }
+  const exRead = readouts(exCtl, [
+    { id: "pius", label: U.r_infl_us }, { id: "pieu", label: U.r_infl_eu }, { id: "dep", label: U.r_depr },
+    { id: "ius", label: U.r_i_us }, { id: "ieu", label: U.r_i_eu },
+  ]);
+  const eqLine = h("p", { class: "say" });
+  exCtl.append(h("p", { class: "note", text: U.eq_head }), eqLine);
+
+  function exploreCard() {
+    return {
+      id: "explore", model: exGeneral ? "general" : "simple", numer: "home", e0: D.e0, peg: false,
+      rate_title: CARDS[0].rate_title,
+      home: { label: CARDS[0].home.label, mu0: X.base.mu, mu1: sMuUs.value, g0: X.base.g, g1: sGUs.value, jump: sJump.value },
+      other: { label: CARDS[0].other.label, mu0: X.base.mu, mu1: sMuEu.value, g0: X.base.g, g1: sGEu.value, jump: 0 },
+    };
+  }
+
+  function drawExplore() {
+    const card = exploreCard();
+    const P = makePanels(exPlots, card, exGeneral);
+    drawPanels(P, card, D.T_end, exGeneral);
+    exNotes.replaceChildren(...notesFor(card));
+    const n = numbers(card);
+    const dep = (card.home.mu1 - card.other.mu1) - (card.home.g1 - card.other.g1);
+    expect("explore growth equation", n.dep_after, dep, 1e-6);
+    const iRow = (v) => (exGeneral ? { now: fill(U.pct, { v: num(v) }) } : { now: "" });
+    exRead({
+      pius: { now: pctShow(n.pi_h_after), was: fill(U.was, { v: num(n.pi_h_before) }) },
+      pieu: { now: pctShow(n.pi_o_after), was: fill(U.was, { v: num(n.pi_o_before) }) },
+      dep: { now: fill(U.pct_year, { v: signedNum(dep) }) },
+      ius: iRow(n.i_after),
+      ieu: iRow(state(card, D.T).i_o),
+    });
+    // the interest rates matter only in the general model
+    for (const id of ["ius", "ieu"]) {
+      const cell = exCtl.querySelector('[data-readout="' + id + '"]');
+      if (cell) cell.parentElement.hidden = !exGeneral;
+    }
+    eqLine.textContent = fill(U.eq_line, { a: num(card.home.mu1), b: num(card.other.mu1), c: num(card.home.g1),
+      d: num(card.other.g1), v: signedNum(dep) });
+    return dep;
+  }
+
+  /* ---------------------------------------------------------------- put it together */
+  const bar = tabs([
+    { id: "cards", label: U.tab_cards, panel: cardsPanel },
+    { id: "explore", label: U.tab_explore, panel: exPanel },
+  ], 0, (id) => { if (id === "explore") drawExplore(); });
+  app.append(bar, cardsPanel, exPanel);
+  showCard();
+})();
+
+</script>
+
+</body></html>
