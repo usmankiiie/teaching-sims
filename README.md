@@ -4,12 +4,12 @@ Interactive simulations for economics courses at United Arab Emirates University
 
 Live site: https://sims.usman-khalid.info (GitHub Pages, from the `main` branch of this repository).
 
-| File | Simulation | Course |
-|------|------------|--------|
-| `shawarma-market-shifts.html` | Shawarma Market Shifts | ECON 105, Chapter 3 |
-| `arbitrage-desk.html` | The Arbitrage Desk | ECON 331, Chapter 13 |
-| `money-and-the-dollar.html` | Money and the Dollar | ECON 331, Chapter 14 |
-| `overshooting-dollar.html` | The Overshooting Dollar | ECON 331, Chapter 15 |
+| File | Simulation | Course | Topic |
+|------|------------|--------|-------|
+| `shawarma-market-shifts.html` | Shawarma Market Shifts | ECON 105 | Supply, demand and market shifts |
+| `arbitrage-desk.html` | The Arbitrage Desk | ECON 331 | Exchange rates, interest rates and arbitrage |
+| `money-and-the-dollar.html` | Money and the Dollar | ECON 331 | Money, prices and the exchange rate in the long run |
+| `overshooting-dollar.html` | The Overshooting Dollar | ECON 331 | Interest rates and exchange rate overshooting |
 
 Each simulation is a single HTML file. It runs in the browser, loads only Google Fonts, and saves or sends nothing.
 
